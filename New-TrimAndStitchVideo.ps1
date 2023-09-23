@@ -18,8 +18,6 @@ $clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLoca
 $TrimAndStitchButtonLocation = @{X=20;Y=500}
 $exitButtonLocation = @{X=20;Y=590}
 
-
-
 # Create a form
 $form = New-Object Windows.Forms.Form
 $form.Text = "MP4 Stitch and Trim Tool"
@@ -221,15 +219,12 @@ $button.Add_Click({
 
     if ($openFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         $script:filePath = $openFileDialog.FileName
-        #$filePath = "C:\Users\David\Videos\Up a Ledge.mp4"
 
         # Use Shell.Application to get the duration of the MP4 file
         $shell = New-Object -ComObject Shell.Application
         $folder = $shell.Namespace((Get-Item $filePath).DirectoryName)
         $script:file = $folder.ParseName((Get-Item $filePath).Name) 
         $script:duration = $folder.GetDetailsOf($file, 27)
-        #Write-Host $file.Path
-        #Write-host $duration
 
         # Display the duration
         $stopTimeTextBox.Text = $duration
@@ -251,10 +246,6 @@ $button.Add_Click({
 
 # Create an event handler for the Add to Array button click
 $addFileButton.Add_Click({
-    <#Write-host "Duration: $duration"
-    Write-host "Start: $($startTimeTextBox.Text)"
-    Write-host "Stop: $($stopTimeTextBox.Text)"
-    Write-host "File: $filePath"#>
 
     $start = $startTimeTextBox.Text
     $stop = $stopTimeTextBox.Text
@@ -291,14 +282,11 @@ $addFileButton.Add_Click({
         $listView.Items.Add($item)
 
         # Clear the text boxes and enable the Add to Array button
-        #$startTimeTextBox.text = '00:00:00'
-        #$stopTimeTextBox.text = $duration
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
     } else {
         # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
-        #$startTimeTextBox.Text = '00:00:00'
         $stopTimeTextBox.Text = $duration
     }
 })
