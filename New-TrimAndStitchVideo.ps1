@@ -47,7 +47,6 @@ $startTimeLabel.Location = New-Object Drawing.Point($($startTimeLocation.X), $($
 $startTimeTextBox = New-Object Windows.Forms.TextBox
 $startTimeTextBox.Location = New-Object Drawing.Point($($startTimeLocation.X+130), $($startTimeLocation.Y))
 $startTimeTextBox.Width = 80
-$startTimeTextBox.Text = '00:00:00'
 
 # Create a label for stop time
 $stopTimeLabel = New-Object Windows.Forms.Label
