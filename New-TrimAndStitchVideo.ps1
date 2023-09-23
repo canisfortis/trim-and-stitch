@@ -10,8 +10,8 @@ $AddedFileLocation = @{X=20;Y=90}
 $PlayButtonLocation = @{X=20;Y=120}
 $ListViewLocation = @{X=20;Y=280}
 $AddFileButtonLocation = @{X=20;Y=250}
-$OpenVlcButtonLocation = @{X=$AddFileButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$DeleteButtonLocation = @{X=$OpenVlcButtonLocation.X+130;Y=$AddFileButtonLocation.Y}
+$playSelectedTrimLocation = @{X=$AddFileButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
+$DeleteButtonLocation = @{X=$playSelectedTrimLocation.X+130;Y=$AddFileButtonLocation.Y}
 $MoveUpButtonLocation = @{X=$DeleteButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
 $MoveDownButtonLocation = @{X=$MoveUpButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
 $clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
@@ -63,7 +63,7 @@ $stopTimeTextBox.Width = 80
 
 # Create a text box to display the duration
 $durationLabel = New-Object Windows.Forms.Label
-$durationLabel.Text = "Duration: N/A"
+$durationLabel.Text = "Duration: Add an MP4 file."
 $durationLabel.Location = New-Object Drawing.Point($DurationLocation.X, $DurationLocation.Y)
 
 # Create a text box to display the duration
@@ -102,11 +102,11 @@ $addFileButton.Width = 100
 $addFileButton.Enabled = $false
 
 # Create a button to open the selected file in VLC
-$openVlcButton = New-Object Windows.Forms.Button
-$openVlcButton.Text = "Play Selected File"
-$openVlcButton.Location = New-Object Drawing.Point($OpenVlcButtonLocation.X, $OpenVlcButtonLocation.Y)
-$openVlcButton.Width = 120
-$openVlcButton.Enabled = $false
+$playSelectedTrim = New-Object Windows.Forms.Button
+$playSelectedTrim.Text = "Play Selected File"
+$playSelectedTrim.Location = New-Object Drawing.Point($playSelectedTrimLocation.X, $playSelectedTrimLocation.Y)
+$playSelectedTrim.Width = 120
+$playSelectedTrim.Enabled = $false
 
 # Create a button to delete the selected item from the ListView
 $deleteButton = New-Object Windows.Forms.Button
@@ -183,9 +183,7 @@ $trimAndStitchButton.Add_Click({
             $count++
         }
 
-        # Notify the user when trimming and stitching is complete
-        [System.Windows.Forms.MessageBox]::Show("Trimming and stitching completed.")
-
+        
         if ($trimData.Count -gt 1) {
             ffmpeg -f concat -safe 0 -i $concatFile -c copy $mergedVideo 
         }
@@ -193,7 +191,24 @@ $trimAndStitchButton.Add_Click({
             Copy-Item $trimmedVideo -Destination $mergedVideo
         }
         
-        $process = [Diagnostics.Process]::Start("vlc.exe", "`"$mergedVideo`"")
+        
+        # Display a message box with an OK button
+        $result = [System.Windows.Forms.MessageBox]::Show("Trimming and stitching completed. Do you want to play the merged video now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
+
+        if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
+            # User clicked "Yes," so open the merged video
+            try {
+                $process = [Diagnostics.Process]::Start("vlc.exe", "`"$mergedVideo`"")
+            } 
+            catch {
+                [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+            }
+        }
+
+        #clear up temp files
+        Remove-Item $env:TEMP\tempvideo*.mp4
+        Remove-Item $concatFile
+        
     }
 })
 
@@ -236,10 +251,11 @@ $button.Add_Click({
 
 # Create an event handler for the Add to Array button click
 $addFileButton.Add_Click({
-    Write-host "Duration: $duration"
+    <#Write-host "Duration: $duration"
     Write-host "Start: $($startTimeTextBox.Text)"
     Write-host "Stop: $($stopTimeTextBox.Text)"
-    Write-host "File: $filePath"
+    Write-host "File: $filePath"#>
+
     $start = $startTimeTextBox.Text
     $stop = $stopTimeTextBox.Text
 
@@ -253,13 +269,25 @@ $addFileButton.Add_Click({
             "FullName" = $filePath
             "StartTime" = $start
             "StopTime" = $stop
+            "TempFile" = ""
         }
-        $fileDetailsArray += $fileDetails
+        
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        $fileDetails.TempFile = $trimmedVideo
+        #$concatLine = "file '$trimmedVideo'"
+        $trimDuration = [TimeSpan]::Parse($fileDetails.StopTime) - [TimeSpan]::Parse($fileDetails.StartTime)
+        #Add-Content -Value $concatLine -Path $concatFile
+        ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo
+        
+        
+        write-host $fileDetails["TempFile"]
+        $script:fileDetailsArray += $filedetails
 
         # Add the file details to the ListView
         $item = New-Object Windows.Forms.ListViewItem($fileDetails["FullName"])
         $item.SubItems.Add($fileDetails["StartTime"])
         $item.SubItems.Add($fileDetails["StopTime"])
+        $item.SubItems.Add($fileDetails["TempFile"])
         $listView.Items.Add($item)
 
         # Clear the text boxes and enable the Add to Array button
@@ -288,19 +316,20 @@ $playButton.Add_Click({
 })
 
 
-# Create an event handler for the Open in VLC button click
-$openVlcButton.Add_Click({
+# Create an event handler for the Play selected trim button click
+$playSelectedTrim.Add_Click({
     if ($listView.SelectedItems.Count -gt 0) {
         $selectedItem = $listView.SelectedItems[0]
         $fileDetails = @{
             "FullName" = $selectedItem.SubItems[0].Text
             "StartTime" = $selectedItem.SubItems[1].Text
             "StopTime" = $selectedItem.SubItems[2].Text
+            "TempFile" = $selectedItem.SubItems[3].Text
         }
 
-        # Launch VLC with the selected file
+                # Launch VLC with the selected file
         try {
-            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.FullName)`"")
+            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
         }
         catch {
             [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
@@ -329,7 +358,7 @@ $deleteButton.Add_Click({
         # Disable the Delete Selected and Open in VLC buttons if there are no items left
         if ($listView.Items.Count -eq 0) {
             $deleteButton.Enabled = $false
-            $openVlcButton.Enabled = $false
+            $playSelectedTrim.Enabled = $false
         }
     }
 })
@@ -339,13 +368,14 @@ $deleteButton.Add_Click({
 $listView.Add_SelectedIndexChanged({
     if ($listView.SelectedItems.Count -gt 0) {
         $deleteButton.Enabled = $true
-        $openVlcButton.Enabled = $true
+        $playSelectedTrim.Enabled = $true
         $moveUpButton.Enabled = $true
         $moveDownButton.Enabled = $true
-        
+        #$tempVideoPath["TempFile"] = $null
+
     } else {
         $deleteButton.Enabled = $false
-        $openVlcButton.Enabled = $false
+        $playSelectedTrim.Enabled = $false
     }
 })
 
@@ -396,7 +426,7 @@ $clearAllButton.Add_Click({
     
     # Disable buttons that require items in the list
     $deleteButton.Enabled = $false
-    $openVlcButton.Enabled = $false
+    $playSelectedTrim.Enabled = $false
     $moveUpButton.Enabled = $false
     $moveDownButton.Enabled = $false
     $trimAndStitchButton.Enabled = $false
@@ -412,7 +442,7 @@ $form.Controls.Add($stopTimeTextBox)
 $form.Controls.Add($durationLabel)
 $form.Controls.Add($addFileButton)
 $form.Controls.Add($listView)
-$form.Controls.Add($openVlcButton)
+$form.Controls.Add($playSelectedTrim)
 $form.Controls.Add($deleteButton)
 $form.Controls.Add($addedFileLabel)
 $form.Controls.Add($moveUpButton)
