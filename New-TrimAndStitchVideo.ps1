@@ -270,7 +270,7 @@ $addFileButton.Add_Click({
     } else {
         # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
-        $startTimeTextBox.Text = '00:00:00'
+        #$startTimeTextBox.Text = '00:00:00'
         $stopTimeTextBox.Text = $duration
     }
 })
