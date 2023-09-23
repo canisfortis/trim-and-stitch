@@ -263,8 +263,8 @@ $addFileButton.Add_Click({
         $listView.Items.Add($item)
 
         # Clear the text boxes and enable the Add to Array button
-        $startTimeTextBox.text = '00:00:00'
-        $stopTimeTextBox.text = $duration
+        #$startTimeTextBox.text = '00:00:00'
+        #$stopTimeTextBox.text = $duration
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
     } else {
