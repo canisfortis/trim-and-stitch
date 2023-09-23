@@ -1,5 +1,5 @@
 # trim-and-stitch
-Uses ffmpeg and vlc to help choose a timestamp to cut from your shadowplay records. It them stitches them altogether and gives saves the merged video file. There is zero encoding involved so its really fast.
+Uses ffmpeg and vlc to help choose a timestamp to cut from your shadowplay records. It them stitches them altogether and saves the merged video file. There is very little/no encoding involved so its fast.
 
 Must have ffmpeg and VLC installed and exe path in environment variable $env:PATH
 
