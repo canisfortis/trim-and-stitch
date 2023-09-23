@@ -193,7 +193,7 @@ $trimAndStitchButton.Add_Click({
             Copy-Item $trimmedVideo -Destination $mergedVideo
         }
         
-        $process = [Diagnostics.Process]::Start("C:\Program Files\VideoLAN\VLC\vlc.exe", "`"$mergedVideo`"")
+        $process = [Diagnostics.Process]::Start("vlc.exe", "`"$mergedVideo`"")
     }
 })
 
@@ -278,12 +278,13 @@ $addFileButton.Add_Click({
 
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
-    $vlcExePath = "C:\Program Files\VideoLAN\VLC\vlc.exe"  # Update this path to match your VLC installation
-    if (Test-Path $vlcExePath) {
-        $process = [Diagnostics.Process]::Start("C:\Program Files\VideoLAN\VLC\vlc.exe", "`"$($file.Path)`"")
-    } else {
-        [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
-    }    
+    
+        try {
+            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($file.Path)`"")
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+        }
 })
 
 
@@ -298,10 +299,10 @@ $openVlcButton.Add_Click({
         }
 
         # Launch VLC with the selected file
-        $vlcExePath = "C:\Program Files\VideoLAN\VLC\vlc.exe"  # Update this path to match your VLC installation
-        if (Test-Path $vlcExePath) {
-            $process = [Diagnostics.Process]::Start("C:\Program Files\VideoLAN\VLC\vlc.exe", "`"$($fileDetails.FullName)`"")
-        } else {
+        try {
+            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.FullName)`"")
+        }
+        catch {
             [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
         }
     }
