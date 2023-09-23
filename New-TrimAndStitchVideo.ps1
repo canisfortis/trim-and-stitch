@@ -3,6 +3,8 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.IO
 Add-Type -AssemblyName System
 
+#region
+
 $StartTimeLocation = @{X=20;Y=180}
 $StopTimeLocation = @{X=20;Y=210}
 $DurationLocation = @{X=20;Y=60}
@@ -25,22 +27,18 @@ $form.Width = 1000
 $form.Height = 700
 $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
 
-# Initialize start and stop times
-$startTime = 0
-$stopTime = 0
-
 # Initialize an array to store file details
 $fileDetailsArray = @()
 
 # Create a button to add an MP4 file
 $button = New-Object Windows.Forms.Button
-$button.Text = "Add MP4 File"
+$button.Text = "Add MP4 file"
 $button.Location = New-Object Drawing.Point(20, 20)
 $button.Width = 100
 
 # Create a label for start time
 $startTimeLabel = New-Object Windows.Forms.Label
-$startTimeLabel.Text = "Start Time:"
+$startTimeLabel.Text = "Start time:"
 $startTimeLabel.Location = New-Object Drawing.Point($($startTimeLocation.X), $($startTimeLocation.Y))
 
 # Create a text box for start time
@@ -50,7 +48,7 @@ $startTimeTextBox.Width = 80
 
 # Create a label for stop time
 $stopTimeLabel = New-Object Windows.Forms.Label
-$stopTimeLabel.Text = "Stop Time:"
+$stopTimeLabel.Text = "Stop time:"
 $stopTimeLabel.Location = New-Object Drawing.Point($stopTimeLocation.X, $StopTimeLocation.Y)
 
 # Create a text box for stop time
@@ -71,7 +69,7 @@ $addedFileLabel.Width = 700
 
 # Create a button to play the current trim file
 $playButton = New-Object Windows.Forms.Button
-$playButton.Text = "Play Source File"
+$playButton.Text = "Play source file"
 $playButton.Location = New-Object Drawing.Point($PlayButtonLocation.X, $PlayButtonLocation.Y)
 $playButton.Width = 120
 $playButton.Enabled = $false
@@ -93,35 +91,35 @@ $listView.Columns.Add("Stop Time", 150)
 
 # Create a button to add the file details to the array
 $addFileButton = New-Object Windows.Forms.Button
-$addFileButton.Text = "Add to Array"
+$addFileButton.Text = "Add to trim list"
 $addFileButton.Location = New-Object Drawing.Point($AddFileButtonLocation.X, $AddFileButtonLocation.Y)
 $addFileButton.Width = 100
 $addFileButton.Enabled = $false
 
 # Create a button to open the selected file in VLC
 $playSelectedTrim = New-Object Windows.Forms.Button
-$playSelectedTrim.Text = "Play Selected File"
+$playSelectedTrim.Text = "Play selected file"
 $playSelectedTrim.Location = New-Object Drawing.Point($playSelectedTrimLocation.X, $playSelectedTrimLocation.Y)
 $playSelectedTrim.Width = 120
 $playSelectedTrim.Enabled = $false
 
 # Create a button to delete the selected item from the ListView
 $deleteButton = New-Object Windows.Forms.Button
-$deleteButton.Text = "Delete Selected"
+$deleteButton.Text = "Delete selected"
 $deleteButton.Location = New-Object Drawing.Point($DeleteButtonLocation.X, $DeleteButtonLocation.Y)
 $deleteButton.Width = 100
 $deleteButton.Enabled = $false
 
 # Create a button to move the selected item up
 $moveUpButton = New-Object Windows.Forms.Button
-$moveUpButton.Text = "Move Up"
+$moveUpButton.Text = "Move up"
 $moveUpButton.Location = New-Object Drawing.Point($MoveUpButtonLocation.X, $MoveUpButtonLocation.Y)
 $moveUpButton.Width = 100
 $moveUpButton.Enabled = $false
 
 # Create a button to move the selected item down
 $moveDownButton = New-Object Windows.Forms.Button
-$moveDownButton.Text = "Move Down"
+$moveDownButton.Text = "Move down"
 $moveDownButton.Location = New-Object Drawing.Point($MoveDownButtonLocation.X, $MoveDownButtonLocation.Y)
 $moveDownButton.Width = 100
 $moveDownButton.Enabled = $false
@@ -134,18 +132,19 @@ $exitButton.Width = 100
 
 # Create a button to clear the list
 $clearAllButton = New-Object Windows.Forms.Button
-$clearAllButton.Text = "Clear All"
+$clearAllButton.Text = "Clear all"
 $clearAllButton.Location = New-Object Drawing.Point($clearAllButtonLocation.X, $clearAllButtonLocation.Y)
 $clearAllButton.Width = 100
+$clearAllButton.Enabled = $false
 
 # Create a button to Trim and Stitch
 $trimAndStitchButton = New-Object Windows.Forms.Button
-$trimAndStitchButton.Text = "Trim and Stitch"
+$trimAndStitchButton.Text = "Trim and stitch"
 $trimAndStitchButton.Location = New-Object Drawing.Point($TrimAndStitchButtonLocation.X, $TrimAndStitchButtonLocation.Y)
 $trimAndStitchButton.Width = 100
 $trimAndStitchButton.Enabled = $false
 
-
+#endregion
 
 # Create an event handler for the Trim and Stitch button click
 $trimAndStitchButton.Add_Click({
@@ -225,7 +224,8 @@ $button.Add_Click({
         $script:file = $folder.ParseName((Get-Item $filePath).Name) 
         $script:duration = $folder.GetDetailsOf($file, 27)
 
-        # Display the duration
+        # Prefill start and stop text boxes
+        $startTimeTextBox.Text = '00:00:00'
         $stopTimeTextBox.Text = $duration
 
 
@@ -240,10 +240,11 @@ $button.Add_Click({
         $stopTimeTextBox.Enabled = $true
         $addFileButton.Enabled = $true
         $playButton.Enabled = $true
+        
     }
 })
 
-# Create an event handler for the Add to Array button click
+# Create an event handler for the Add to Trim List button click
 $addFileButton.Add_Click({
 
     $start = $startTimeTextBox.Text
@@ -283,6 +284,7 @@ $addFileButton.Add_Click({
         # Clear the text boxes and enable the Add to Array button
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
+        $clearAllButton.Enabled = $true
     } else {
         # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
@@ -346,6 +348,7 @@ $deleteButton.Add_Click({
         if ($listView.Items.Count -eq 0) {
             $deleteButton.Enabled = $false
             $playSelectedTrim.Enabled = $false
+            $clearAllButton.Enabled = $false
         }
     }
 })
@@ -417,6 +420,7 @@ $clearAllButton.Add_Click({
     $moveUpButton.Enabled = $false
     $moveDownButton.Enabled = $false
     $trimAndStitchButton.Enabled = $false
+    $clearAllButton.Enabled = $false
 })
 
 
