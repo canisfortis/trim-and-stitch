@@ -223,7 +223,7 @@ catch {
 #region
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
-    Start-Video $mergedVideo
+    Start-Video "$($file.Path)"
 })
 
 
@@ -437,18 +437,6 @@ $addFileButton.Add_Click({
     }
 })
 
-# Create an event handler for the Play Trimmed File button click
-$playButton.Add_Click({
-    
-        # Launch the selected file with default media player
-        try {
-            #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
-            Start-Process -FilePath "$($file.Path)"
-        }
-        catch {
-            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
-        }
-})
 
 # Create an event handler for the Play selected trim button click
 $playSelectedTrim.Add_Click({
