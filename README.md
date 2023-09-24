@@ -1,48 +1,47 @@
 # MP4 Stitch and Trim Tool
 
-The MP4 Stitch and Trim Tool is a Windows application that allows you to easily trim and stitch together MP4 video files. It provides a user-friendly graphical interface for selecting video clips, specifying start and stop times for trimming, and creating a merged video.
+The MP4 Stitch and Trim Tool is a user-friendly Windows application that simplifies the process of trimming and stitching together MP4 video files. This tool is designed for ease of use, allowing you to select video clips, set start and stop times for trimming, and create a merged video with just a few clicks.
 
 ## Features
 
-- Add multiple MP4 video files to the trimming and stitching queue.
-- Specify start and stop times for each clip.
-- Play individual clips to preview them.
-- Reorder and delete clips in the queue.
-- Trim and stitch the selected clips into a single merged MP4 file.
-- Play the merged video with VLC media player.
-- Clear the queue and start over.
+- **Add Multiple MP4 Files**: Add as many MP4 video files as needed to the trimming and stitching queue.
 
-## Dependencies
+- **Specify Trim Times**: For each video file in the queue, specify precise start and stop times for trimming in the format `hh:mm:ss`.
 
-Before using this application, make sure you have the following dependencies installed:
+- **Preview Clips**: Play individual clips to preview them before adding them to the final merged video.
 
-1. **FFmpeg**: This tool is used for video trimming and stitching. It should be available in your system's PATH. You can download FFmpeg from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html).
+- **Queue Management**: Easily manage your queue of video clips using the ListView. Reorder clips, delete unnecessary ones, or clear the queue entirely.
 
-2. **VLC media player**: VLC is required to play video files. Ensure that VLC is installed on your system and also available in your system's PATH. You can download VLC from [https://www.videolan.org/vlc/](https://www.videolan.org/vlc/).
+- **Trim and Stitch**: Combine the selected video clips into a single merged MP4 file. The tool automatically handles the trimming and stitching process.
+
+- **Play Merged Video**: Play the merged video seamlessly with VLC media player directly from the application.
+
+- **Dependencies**: The tool requires the following dependencies to be installed:
+  1. **FFmpeg**: Used for video trimming and stitching. Make sure it is available in your system's PATH. Download FFmpeg from [here](https://ffmpeg.org/download.html).
+  2. **VLC media player**: Required for playing video files. Ensure VLC is installed and accessible via your system's PATH. Get VLC from [here](https://www.videolan.org/vlc/).
 
 ## Usage
 
 1. **Adding MP4 Files**:
-   - Click the "Add MP4 File" button to add video files to the queue.
-   - Select a video file from the file dialog.
+   - Click the "Add MP4 File" button to select and add video files to the queue.
 
 2. **Specifying Trim Times**:
-   - For each added file, specify the start and stop times for trimming in the format `hh:mm:ss`.
-   - Click "Add to Array" to add the file to the trimming queue.
-   - You can also play the source video to verify the trim times.
+   - For each added file, set the start and stop times for trimming in the `hh:mm:ss` format.
+   - Click "Add to Array" to include the file in the trimming queue.
+   - You can also preview the source video to validate trim times.
 
 3. **Managing the Queue**:
-   - Use the ListView to view and manage the files in the queue.
-   - You can reorder files by selecting an item and clicking "Move Up" or "Move Down."
-   - To delete a file from the queue, select it and click "Delete Selected."
+   - Utilize the ListView to view and manage the files in the queue.
+   - Rearrange files by selecting an item and clicking "Move Up" or "Move Down."
+   - To remove a file from the queue, select it and click "Delete Selected."
 
 4. **Trimming and Stitching**:
    - Click the "Trim and Stitch" button to process the files in the queue.
    - Specify the output file location in the file dialog that appears.
-   - After processing, you will have the option to play the merged video with VLC.
+   - After processing, you'll have the option to play the merged video with VLC.
 
 5. **Playing Selected Clips**:
-   - Select a clip in the ListView and click "Play Selected File" to preview it with VLC.
+   - Select a clip in the ListView and click "Play Selected File" to preview it using VLC.
 
 6. **Clearing the Queue**:
    - Click "Clear All" to remove all files from the queue.
@@ -52,15 +51,14 @@ Before using this application, make sure you have the following dependencies ins
 
 ## License
 
-This project is licensed under the GNU v3 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU v3 License. See the [LICENSE](LICENSE) file for full license details.
 
 ## Acknowledgments
 
-- This application uses FFmpeg for video processing.
+- This application relies on FFmpeg for video processing.
 - VLC media player is used for video playback.
 
 ## Contributing
 
-
-## Issues
+If you'd like to contribute to the development of this tool or report issues, please check the [Issues](link_to_issues) section.
 
