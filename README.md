@@ -2,6 +2,34 @@
 
 The MP4 Stitch and Trim Tool is a user-friendly Windows application that simplifies the process of trimming and stitching together MP4 video files. This tool is designed for ease of use, allowing you to select video clips, set start and stop times for trimming, and create a merged video with just a few clicks.
 
+## About FFmpeg Copy Mode
+
+The MP4 Stitch and Trim Tool utilizes FFmpeg in "copy mode" when trimming and stitching video clips. This mode is specifically chosen to ensure that no unnecessary video encoding takes place during the process.
+
+### What is FFmpeg Copy Mode?
+
+In FFmpeg, "copy mode" (also known as stream copy or bitstream copy) is a feature that allows the tool to perform video operations without re-encoding the video and audio streams. Instead of transcoding the entire video, FFmpeg simply copies the selected portions of the source video into the output file. This mode is highly efficient and preserves the original video and audio quality.
+
+### Why Use FFmpeg Copy Mode?
+
+Using FFmpeg in copy mode offers several advantages:
+
+1. **Lossless Quality**: By avoiding re-encoding, the tool maintains the original video and audio quality. This ensures that the trimmed clips and the final merged video are identical in quality to the source files.
+
+2. **Speed**: Copying streams is significantly faster than video encoding, especially for large video files. This results in quicker processing times, allowing you to create your merged video swiftly.
+
+3. **Preservation**: The tool respects the integrity of the source files and does not introduce any artifacts or quality degradation during the trimming and stitching process.
+
+4. **Resource Efficiency**: Video encoding can be resource-intensive, requiring substantial CPU power and time. FFmpeg copy mode conserves system resources and is more efficient for this particular task.
+
+### What You Should Expect
+
+When using the MP4 Stitch and Trim Tool, you can expect a seamless and efficient trimming and stitching process thanks to FFmpeg's copy mode. Your final merged video will match the quality of your source clips, and the entire process will be completed in a fraction of the time it would take for video re-encoding.
+
+Feel confident that your videos will remain intact and unaltered in terms of quality when using this tool, making it an excellent choice for preserving your video content while creating a stitched video from multiple clips.
+
+
+
 ## Features
 
 - **Add Multiple MP4 Files**: Add as many MP4 video files as needed to the trimming and stitching queue.
