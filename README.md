@@ -79,7 +79,6 @@ This project is licensed under the GNU v3 License. See the [LICENSE](LICENSE) fi
 ## Acknowledgments
 
 - This application relies on FFmpeg for video processing.
-- VLC media player is used for video playback.
 
 ## Contributing
 
