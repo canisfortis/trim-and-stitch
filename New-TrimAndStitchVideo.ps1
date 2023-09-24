@@ -4,6 +4,45 @@ Add-Type -AssemblyName System.IO
 Add-Type -AssemblyName System
 
 #region
+#functions
+#recreate the file details array from the listview
+function Set-FileDetailArray {
+    $array = @()
+    foreach ($item in $listView.Items) {
+        $details = @{
+            "FullName" = $item.SubItems[0].Text
+            "StartTime" = $item.SubItems[1].Text
+            "StopTime" = $item.SubItems[2].Text
+            "Duration" = $item.SubItems[3].Text
+            "TempFile" = $item.SubItems[4].Text
+        }
+        $array += $details
+    }
+    return $array
+
+}
+
+#Calculate the total duration of the trimmed video
+function Get-TotalDuration {
+    $fileDetailsArray = Set-FileDetailArray
+    #convert the Duration into a timespan object and calculate the seconds then convert back to timespan   
+    # Calculate the sum of durations in seconds
+    $totalSeconds = $fileDetailsArray | ForEach-Object {
+        $duration = [TimeSpan]::Parse($_.Duration)
+        $duration.TotalSeconds
+    } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+
+    # Convert the total seconds back to a TimeSpan
+    $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
+    return $totalTimeSpan
+}
+
+
+
+#endregion
+
+
+#region
 
 $StartTimeLocation = @{X=20;Y=180}
 $StopTimeLocation = @{X=20;Y=210}
@@ -17,8 +56,9 @@ $DeleteButtonLocation = @{X=$playSelectedTrimLocation.X+130;Y=$AddFileButtonLoca
 $MoveUpButtonLocation = @{X=$DeleteButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
 $MoveDownButtonLocation = @{X=$MoveUpButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
 $clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$TrimAndStitchButtonLocation = @{X=20;Y=500}
-$exitButtonLocation = @{X=20;Y=590}
+$TrimAndStitchButtonLocation = @{X=20;Y=510}
+$exitButtonLocation = @{X=20;Y=600}
+$exportIndividualTrimsButtonLocation = @{X=20;Y=560}
 
 # Create a form
 $form = New-Object Windows.Forms.Form
@@ -31,10 +71,10 @@ $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
 $fileDetailsArray = @()
 
 # Create a button to add an MP4 file
-$button = New-Object Windows.Forms.Button
-$button.Text = "Add MP4 file"
-$button.Location = New-Object Drawing.Point(20, 20)
-$button.Width = 100
+$addMp4Button = New-Object Windows.Forms.Button
+$addMp4Button.Text = "Add MP4 file"
+$addMp4Button.Location = New-Object Drawing.Point(20, 20)
+$addMp4Button.Width = 100
 
 # Create a label for start time
 $startTimeLabel = New-Object Windows.Forms.Label
@@ -78,7 +118,7 @@ $playButton.Enabled = $false
 # Create a ListView to display file details with columns
 $listView = New-Object Windows.Forms.ListView
 $listView.Location = New-Object Drawing.Point($ListViewLocation.X, $ListViewLocation.Y)
-$listView.Width = 700
+$listView.Width = 900
 $listView.Height = 200
 $listView.View = [System.Windows.Forms.View]::Details
 
@@ -86,6 +126,7 @@ $listView.View = [System.Windows.Forms.View]::Details
 $listView.Columns.Add("File", 300)
 $listView.Columns.Add("Start Time", 150)
 $listView.Columns.Add("Stop Time", 150)
+$listView.Columns.Add("Duration", 150)
 
 
 
@@ -137,6 +178,13 @@ $clearAllButton.Location = New-Object Drawing.Point($clearAllButtonLocation.X, $
 $clearAllButton.Width = 100
 $clearAllButton.Enabled = $false
 
+# Create a button to just export individual trims
+$exportIndividualTrimButton = New-Object Windows.Forms.Button
+$exportIndividualTrimButton.Text = "Export individual trims"
+$exportIndividualTrimButton.Location = New-Object Drawing.Point($exportIndividualTrimsButtonLocation.X, $exportIndividualTrimsButtonLocation.Y)
+$exportIndividualTrimButton.Width = 150
+$exportIndividualTrimButton.Enabled = $false
+
 # Create a button to Trim and Stitch
 $trimAndStitchButton = New-Object Windows.Forms.Button
 $trimAndStitchButton.Text = "Trim and stitch"
@@ -144,8 +192,19 @@ $trimAndStitchButton.Location = New-Object Drawing.Point($TrimAndStitchButtonLoc
 $trimAndStitchButton.Width = 100
 $trimAndStitchButton.Enabled = $false
 
+# New table next to trim and stich button showing the total duration of the trimmed video
+$trimAndStitchDetailsTable = New-Object Windows.Forms.Label
+$trimAndStitchDetailsTable.Text = "Total duration of stitched video: "
+$trimAndStitchDetailsTable.Location = New-Object Drawing.Point(20, 540)
+$trimAndStitchDetailsTable.Width = 300
+
+
+
+
 #endregion
 
+
+#region
 # Create an event handler for the Trim and Stitch button click
 $trimAndStitchButton.Add_Click({
     $saveFileDialog = New-Object Windows.Forms.SaveFileDialog
@@ -165,6 +224,7 @@ $trimAndStitchButton.Add_Click({
                 "File" = $item.SubItems[0].Text
                 "Start Time" = $item.SubItems[1].Text
                 "Stop Time" = $item.SubItems[2].Text
+                "Duration" = $item.SubItems[3].Text
             }
         }
         
@@ -175,13 +235,13 @@ $trimAndStitchButton.Add_Click({
             $concatLine = "file '$trimmedVideo'"
             $trimDuration = [TimeSpan]::Parse($trim."Stop Time") - [TimeSpan]::Parse($trim."Start Time")
             Add-Content -Value $concatLine -Path $concatFile
-            ffmpeg -ss $trim."Start Time" -t $trimDuration -i $trim.File -c copy $trimmedVideo
+            ffmpeg -ss $trim."Start Time" -t $trimDuration -i $trim.File -c copy $trimmedVideo -loglevel quiet
             $count++
         }
 
         
         if ($trimData.Count -gt 1) {
-            ffmpeg -f concat -safe 0 -i $concatFile -c copy $mergedVideo 
+            ffmpeg -f concat -safe 0 -i $concatFile -c copy $mergedVideo -loglevel quiet
         }
         else {
             Copy-Item $trimmedVideo -Destination $mergedVideo
@@ -208,8 +268,65 @@ $trimAndStitchButton.Add_Click({
     }
 })
 
+# Create an event handler for the Export Individual Trims button click
+$exportIndividualTrimButton.Add_Click({
+    $saveFileDialog = New-Object Windows.Forms.FolderBrowserDialog
+    $saveFileDialog.Description = "Select a folder to save the individual trims"
+    $saveFileDialog.ShowNewFolderButton = $true
+
+    if ($saveFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $saveFolder = $saveFileDialog.SelectedPath
+
+        # Create an array to store items and subitems
+        $trimData = @()
+
+        # Loop through each item in the ListView
+        $trimData = foreach ($item in $listView.Items) {
+            # Create an ordered dictionary to store item data
+            [ordered]@{
+                "File" = $item.SubItems[0].Text
+                "Start Time" = $item.SubItems[1].Text
+                "Stop Time" = $item.SubItems[2].Text
+                "Duration" = $item.SubItems[3].Text
+            }
+        }
+        
+        $count = 1
+        
+        foreach ($trim in $trimData) {
+            $trimmedVideo = $saveFolder + "\trimmed video " + (Get-Date -format 'yyyyMMddHHmmss') + "_" + $count + ".mp4"
+            $trimDuration = [TimeSpan]::Parse($trim."Stop Time") - [TimeSpan]::Parse($trim."Start Time")
+            ffmpeg -ss $trim."Start Time" -t $trimDuration -i $trim.File -c copy $trimmedVideo -loglevel quiet
+            $count++
+        }
+
+        
+        # Display a message box with an OK button
+        $result = [System.Windows.Forms.MessageBox]::Show("Trimming completed. Do you want to open the folder now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
+
+        if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
+            # User clicked "Yes," so open the merged video
+            try {
+                $process = [Diagnostics.Process]::Start("explorer.exe", "`"$saveFolder`"")
+            } 
+            catch {
+                [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+            }
+        }
+
+        #clear up temp files
+        Remove-Item $env:TEMP\tempvideo*.mp4
+        
+    }
+
+
+
+
+})
+
+
 # Create an event handler for the Add MP4 File button click
-$button.Add_Click({
+$addMp4Button.Add_Click({
     
 
     $openFileDialog = New-Object Windows.Forms.OpenFileDialog
@@ -260,31 +377,48 @@ $addFileButton.Add_Click({
             "FullName" = $filePath
             "StartTime" = $start
             "StopTime" = $stop
+            "Duration" = [TimeSpan]::Parse($stop) - [TimeSpan]::Parse($start)
             "TempFile" = ""
         }
         
         $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
         $fileDetails.TempFile = $trimmedVideo
         #$concatLine = "file '$trimmedVideo'"
-        $trimDuration = [TimeSpan]::Parse($fileDetails.StopTime) - [TimeSpan]::Parse($fileDetails.StartTime)
+        $trimDuration = $fileDetails.Duration
         #Add-Content -Value $concatLine -Path $concatFile
-        ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo
+        ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
         
-        
-        write-host $fileDetails["TempFile"]
         $script:fileDetailsArray += $filedetails
 
         # Add the file details to the ListView
         $item = New-Object Windows.Forms.ListViewItem($fileDetails["FullName"])
         $item.SubItems.Add($fileDetails["StartTime"])
         $item.SubItems.Add($fileDetails["StopTime"])
+        $item.SubItems.Add($($fileDetails["Duration"]).ToString())
         $item.SubItems.Add($fileDetails["TempFile"])
         $listView.Items.Add($item)
 
+        # Recreate $fileDetailsArray from the ListView
+        $fileDetailsArray = @()
+        $fileDetailsArray = Set-FileDetailArray
+
+        #convert the Duration into a timespan object and calculate the seconds then convert back to timespan   
+        # Calculate the sum of durations in seconds
+        $totalSeconds = $fileDetailsArray | ForEach-Object {
+            $duration = [TimeSpan]::Parse($_.Duration)
+            $duration.TotalSeconds
+        } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+
+        # Convert the total seconds back to a TimeSpan
+        $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
+            
+
         # Clear the text boxes and enable the Add to Array button
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: " + $(Get-TotalDuration)
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
         $clearAllButton.Enabled = $true
+        $exportIndividualTrimButton.Enabled = $true        
     } else {
         # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
@@ -313,7 +447,8 @@ $playSelectedTrim.Add_Click({
             "FullName" = $selectedItem.SubItems[0].Text
             "StartTime" = $selectedItem.SubItems[1].Text
             "StopTime" = $selectedItem.SubItems[2].Text
-            "TempFile" = $selectedItem.SubItems[3].Text
+            "Duration" = $selectedItem.SubItems[3].Text
+            "TempFile" = $selectedItem.SubItems[4].Text
         }
 
                 # Launch VLC with the selected file
@@ -339,16 +474,25 @@ $deleteButton.Add_Click({
         }
 
         # Find the corresponding file details in the array and remove it
-        $fileDetailsArray = $fileDetailsArray | Where-Object { $_.FullName -ne $fileDetails.FullName }
+        #$fileDetailsArray = $fileDetailsArray | Where-Object { $_.FullName -ne $fileDetails.FullName }
         
         # Remove the selected item from the ListView
         $listView.Items.Remove($selectedItem)
+            
+
+        # Clear the text boxes and enable the Add to Array button
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: " + $(Get-TotalDuration)
 
         # Disable the Delete Selected and Open in VLC buttons if there are no items left
         if ($listView.Items.Count -eq 0) {
             $deleteButton.Enabled = $false
             $playSelectedTrim.Enabled = $false
             $clearAllButton.Enabled = $false
+            $exportIndividualTrimButton.Enabled = $false
+            $trimAndStitchButton.Enabled = $false
+            $moveUpButton.Enabled = $false
+            $moveDownButton.Enabled = $false
+            
         }
     }
 })
@@ -421,11 +565,15 @@ $clearAllButton.Add_Click({
     $moveDownButton.Enabled = $false
     $trimAndStitchButton.Enabled = $false
     $clearAllButton.Enabled = $false
+    $exportIndividualTrimButton.Enabled = $false
+    $trimAndStitchDetailsTable.Text = "Total duration of stitched video: "
 })
 
+#endregion
 
+#region
 # Add controls to the form
-$form.Controls.Add($button)
+$form.Controls.Add($addMp4Button)
 $form.Controls.Add($startTimeLabel)
 $form.Controls.Add($startTimeTextBox)
 $form.Controls.Add($stopTimeLabel)
@@ -439,9 +587,12 @@ $form.Controls.Add($addedFileLabel)
 $form.Controls.Add($moveUpButton)
 $form.Controls.Add($moveDownButton)
 $form.Controls.Add($trimAndStitchButton)
+$form.Controls.Add($trimAndStitchDetailsTable)
+$form.Controls.Add($exportIndividualTrimButton)
 $form.Controls.Add($playButton)
 $form.Controls.Add($exitButton)
 $form.Controls.Add($clearAllButton)
+#endregion
 
 # Show the form
 $form.ShowDialog()
