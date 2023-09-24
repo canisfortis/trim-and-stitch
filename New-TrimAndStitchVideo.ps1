@@ -253,7 +253,7 @@ $trimAndStitchButton.Add_Click({
         $count = 1
         
         foreach ($trim in $trimData) {
-            $trimmedVideo = $env:TEMP + "\tempvideo" + (Get-Date -format 'yyyyMMddHHmmss') + "_" + $count + ".mp4"
+            $trimmedVideo = "$env:TEMP\tempvideo$(Get-Date -format 'yyyyMMddHHmmss')_$count.mp4"
             $concatLine = "file '$trimmedVideo'"
             $trimDuration = [TimeSpan]::Parse($trim."Stop Time") - [TimeSpan]::Parse($trim."Start Time")
             Add-Content -Value $concatLine -Path $concatFile
