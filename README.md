@@ -72,35 +72,6 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
   1. **FFmpeg**: Used for video trimming and stitching. Make sure it is available in your system's PATH. Download FFmpeg from [here](https://ffmpeg.org/download.html).
   2. **Default Media Player capable of playing the selected source video types**: Required for playing video files. VLC is one such video player. Get VLC from [here](https://www.videolan.org/vlc/).
 
-## Usage
-
-1. **Adding MP4 Files**:
-   - Click the "Add MP4 File" button to select and add video files to the queue.
-
-2. **Specifying Trim Times**:
-   - For each added file, set the start and stop times for trimming in the `hh:mm:ss` format.
-   - Click "Add to Array" to include the file in the trimming queue.
-   - You can also preview the source video to validate trim times.
-
-3. **Managing the Queue**:
-   - Utilize the ListView to view and manage the files in the queue.
-   - Rearrange files by selecting an item and clicking "Move Up" or "Move Down."
-   - To remove a file from the queue, select it and click "Delete Selected."
-
-4. **Trimming and Stitching**:
-   - Click the "Trim and Stitch" button to process the files in the queue.
-   - Specify the output file location in the file dialog that appears.
-   - After processing, you'll have the option to play the merged video with VLC.
-
-5. **Playing Selected Clips**:
-   - Select a clip in the ListView and click "Play Selected File" to preview it using VLC.
-
-6. **Clearing the Queue**:
-   - Click "Clear All" to remove all files from the queue.
-
-7. **Exiting the Application**:
-   - Click "Exit" to close the application.
-
 ## License
 
 This project is licensed under the GNU v3 License. See the [LICENSE](LICENSE) file for full license details.
