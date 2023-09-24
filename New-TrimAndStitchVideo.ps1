@@ -358,10 +358,10 @@ $addMp4Button.Add_Click({
 
 
         # Display the duration
-        $durationLabel.Text = "Duration: " + $duration
+        $durationLabel.Text = "Duration: $duration"
 
         #Display the current file
-        $addedFileLabel.Text = "Current Trim File: " + $file.Path
+        $addedFileLabel.Text = "Current Trim File:  $($file.Path)"
 
         # Enable the start and stop time text boxes
         $startTimeTextBox.Enabled = $true
@@ -408,24 +408,9 @@ $addFileButton.Add_Click({
         $item.SubItems.Add($($fileDetails["Duration"]).ToString())
         $item.SubItems.Add($fileDetails["TempFile"])
         $listView.Items.Add($item)
-
-        # Recreate $fileDetailsArray from the ListView
-        $fileDetailsArray = @()
-        $fileDetailsArray = Set-FileDetailArray
-
-        #convert the Duration into a timespan object and calculate the seconds then convert back to timespan   
-        # Calculate the sum of durations in seconds
-        $totalSeconds = $fileDetailsArray | ForEach-Object {
-            $duration = [TimeSpan]::Parse($_.Duration)
-            $duration.TotalSeconds
-        } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-
-        # Convert the total seconds back to a TimeSpan
-        $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
-            
-
+        
         # Clear the text boxes and enable the Add to Array button
-        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: " + $(Get-TotalDuration)
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
         $clearAllButton.Enabled = $true
@@ -479,7 +464,7 @@ $deleteButton.Add_Click({
             
 
         # Clear the text boxes and enable the Add to Array button
-        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: " + $(Get-TotalDuration)
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
 
         # Disable buttons that rely on items in the list
         if ($listView.Items.Count -eq 0) {
