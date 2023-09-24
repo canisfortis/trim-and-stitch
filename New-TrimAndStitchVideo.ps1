@@ -36,10 +36,8 @@ function Get-TotalDuration {
     $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
     return $totalTimeSpan
 }
-
-
-
 #endregion
+
 
 
 #region
@@ -100,6 +98,7 @@ $stopTimeTextBox.Width = 80
 $durationLabel = New-Object Windows.Forms.Label
 $durationLabel.Text = "Duration: Add an MP4 file."
 $durationLabel.Location = New-Object Drawing.Point($DurationLocation.X, $DurationLocation.Y)
+$durationLabel.Width = 300
 
 # Create a text box to display the duration
 $addedFileLabel = New-Object Windows.Forms.Label
@@ -114,7 +113,6 @@ $playButton.Location = New-Object Drawing.Point($PlayButtonLocation.X, $PlayButt
 $playButton.Width = 120
 $playButton.Enabled = $false
 
-
 # Create a ListView to display file details with columns
 $listView = New-Object Windows.Forms.ListView
 $listView.Location = New-Object Drawing.Point($ListViewLocation.X, $ListViewLocation.Y)
@@ -128,8 +126,6 @@ $listView.Columns.Add("Start Time", 150)
 $listView.Columns.Add("Stop Time", 150)
 $listView.Columns.Add("Duration", 150)
 
-
-
 # Create a button to add the file details to the array
 $addFileButton = New-Object Windows.Forms.Button
 $addFileButton.Text = "Add to trim list"
@@ -137,7 +133,7 @@ $addFileButton.Location = New-Object Drawing.Point($AddFileButtonLocation.X, $Ad
 $addFileButton.Width = 100
 $addFileButton.Enabled = $false
 
-# Create a button to open the selected file in VLC
+# Create a button to open the selected file in the default media player
 $playSelectedTrim = New-Object Windows.Forms.Button
 $playSelectedTrim.Text = "Play selected file"
 $playSelectedTrim.Location = New-Object Drawing.Point($playSelectedTrimLocation.X, $playSelectedTrimLocation.Y)
@@ -198,6 +194,15 @@ $trimAndStitchDetailsTable.Text = "Total duration of stitched video: "
 $trimAndStitchDetailsTable.Location = New-Object Drawing.Point(20, 540)
 $trimAndStitchDetailsTable.Width = 300
 
+# Test if ffmpeg is installed
+try {
+    $ffmpeg = ffmpeg -loglevel quiet
+}
+catch {
+    [System.Windows.Forms.MessageBox]::Show("ffmpeg is not installed. Please install ffmpeg and try again.")
+    $form.Close()
+}
+
 
 
 
@@ -253,12 +258,18 @@ $trimAndStitchButton.Add_Click({
 
         if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
             # User clicked "Yes," so open the merged video
-            try {
-                $process = [Diagnostics.Process]::Start("vlc.exe", "`"$mergedVideo`"")
-            } 
-            catch {
-                [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
-            }
+            # Create an event handler for the Play Trimmed File button click
+            $playButton.Add_Click({
+                
+                # Launch the selected file with default media player
+                try {
+                    #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
+                    Start-Process -FilePath "$($mergedVideo)"
+                }
+                catch {
+                    [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
+                }
+            })
         }
 
         #clear up temp files
@@ -310,7 +321,7 @@ $exportIndividualTrimButton.Add_Click({
                 $process = [Diagnostics.Process]::Start("explorer.exe", "`"$saveFolder`"")
             } 
             catch {
-                [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+                [System.Windows.Forms.MessageBox]::Show("Folder not found.")
             }
         }
 
@@ -318,12 +329,7 @@ $exportIndividualTrimButton.Add_Click({
         Remove-Item $env:TEMP\tempvideo*.mp4
         
     }
-
-
-
-
 })
-
 
 # Create an event handler for the Add MP4 File button click
 $addMp4Button.Add_Click({
@@ -426,18 +432,18 @@ $addFileButton.Add_Click({
     }
 })
 
-
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
     
+        # Launch the selected file with default media player
         try {
-            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($file.Path)`"")
+            #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
+            Start-Process -FilePath "$($file.Path)"
         }
         catch {
-            [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
         }
 })
-
 
 # Create an event handler for the Play selected trim button click
 $playSelectedTrim.Add_Click({
@@ -451,17 +457,16 @@ $playSelectedTrim.Add_Click({
             "TempFile" = $selectedItem.SubItems[4].Text
         }
 
-                # Launch VLC with the selected file
+        # Launch the selected file with default media player
         try {
-            $process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
+            #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
+            Start-Process -FilePath "$($fileDetails.TempFile)"
         }
         catch {
-            [System.Windows.Forms.MessageBox]::Show("VLC media player not found. Please provide the correct path to VLC executable.")
+            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
         }
     }
 })
-
-
 
 # Create an event handler for the Delete Selected button click
 $deleteButton.Add_Click({
@@ -483,7 +488,7 @@ $deleteButton.Add_Click({
         # Clear the text boxes and enable the Add to Array button
         $trimAndStitchDetailsTable.Text = "Total duration of stitched video: " + $(Get-TotalDuration)
 
-        # Disable the Delete Selected and Open in VLC buttons if there are no items left
+        # Disable buttons that rely on items in the list
         if ($listView.Items.Count -eq 0) {
             $deleteButton.Enabled = $false
             $playSelectedTrim.Enabled = $false
@@ -496,7 +501,6 @@ $deleteButton.Add_Click({
         }
     }
 })
-
 
 # Create an event handler for the ListView SelectedIndexChanged event
 $listView.Add_SelectedIndexChanged({
@@ -530,7 +534,6 @@ $moveUpButton.Add_Click({
         }
     }
 })
-
 
 # Create an event handler for the Move Down button click
 $moveDownButton.Add_Click({
