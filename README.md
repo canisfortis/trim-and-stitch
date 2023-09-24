@@ -30,7 +30,33 @@ Feel confident that your videos will remain intact and unaltered in terms of qua
 
 
 
-## Features
+
+## Getting Started
+
+Follow these simple steps to download the PS1 script file and run the MP4 Stitch and Trim Tool on your Windows machine:
+
+### Prerequisites
+
+Before you begin, please ensure you have the following prerequisites installed:
+
+1. **FFmpeg**: This tool is used for video trimming and stitching. It should be available in your system's PATH. You can download FFmpeg from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html).
+
+### Installation
+
+1. **Download the Script**:
+   - Click the "Download" button at the top of this repository to download the `MP4StitchAndTrimTool.ps1` script file to your computer.
+
+2. **Run the Script**:
+   - Right click on the script and click "Run with PowerShell"
+
+3. **Use the Application**:
+   - The MP4 Stitch and Trim Tool graphical user interface (GUI) will open, allowing you to add, trim, stitch, and manage your video clips effortlessly.
+
+4. **Enjoy Video Editing**:
+   - Start adding MP4 files, specifying trim times, and utilizing the tool's features to streamline your video editing process.
+
+
+## Usage
 
 The MP4 Stitch and Trim Tool offers a range of features to streamline your video editing process:
 
@@ -83,4 +109,3 @@ This project is licensed under the GNU v3 License. See the [LICENSE](LICENSE) fi
 ## Contributing
 
 If you'd like to contribute to the development of this tool or report issues, please check the [Issues](link_to_issues) section.
-
