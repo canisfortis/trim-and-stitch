@@ -310,7 +310,7 @@ $exportIndividualTrimButton.Add_Click({
         $count = 1
         
         foreach ($trim in $trimData) {
-            $trimmedVideo = $saveFolder + "\trimmed video " + (Get-Date -format 'yyyyMMddHHmmss') + "_" + $count + ".mp4"
+            $trimmedVideo = "$saveFolder\trimmed video $(Get-Date -format 'yyyyMMddHHmmss')_$count.mp4"
             $trimDuration = [TimeSpan]::Parse($trim."Stop Time") - [TimeSpan]::Parse($trim."Start Time")
             ffmpeg -ss $trim."Start Time" -t $trimDuration -i $trim.File -c copy $trimmedVideo -loglevel quiet
             $count++
