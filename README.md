@@ -32,17 +32,41 @@ Feel confident that your videos will remain intact and unaltered in terms of qua
 
 ## Features
 
-- **Add Multiple MP4 Files**: Add as many MP4 video files as needed to the trimming and stitching queue.
+The MP4 Stitch and Trim Tool offers a range of features to streamline your video editing process:
 
-- **Specify Trim Times**: For each video file in the queue, specify precise start and stop times for trimming in the format `hh:mm:ss`.
+1. **Add Multiple MP4 Files**:
+   - Click the "Add MP4 File" button to add video files to the trimming and stitching queue.
+   - Select a video file from the file dialog.
 
-- **Preview Clips**: Play individual clips to preview them before adding them to the final merged video.
+2. **Specify Trim Times**:
+   - For each added file, specify the start and stop times for trimming in the format `hh:mm:ss`.
+   - Click "Add to Array" to add the file to the trimming queue.
+   - You can also play the source video to verify the trim times.
 
-- **Queue Management**: Easily manage your queue of video clips using the ListView. Reorder clips, delete unnecessary ones, or clear the queue entirely.
+3. **Export Individual Trimmed Segments**:
+   - After specifying trim times, use the "Export Individual Trims" button to save each trimmed segment as a separate MP4 file.
+   - Select a destination folder to save the individual trims.
+   - This feature is useful when you need to keep each trimmed segment as a separate file.
 
-- **Trim and Stitch**: Combine the selected video clips into a single merged MP4 file. The tool automatically handles the trimming and stitching process.
+4. **Play Selected Clips**:
+   - Select a clip in the ListView and click "Play Selected File" to preview it with VLC media player.
 
-- **Play Merged Video**: Play the merged video seamlessly with VLC media player directly from the application.
+5. **Manage the Queue**:
+   - Use the ListView to view and manage the files in the queue.
+   - Reorder files by selecting an item and clicking "Move Up" or "Move Down."
+   - To delete a file from the queue, select it and click "Delete Selected."
+
+6. **Trim and Stitch**:
+   - Click the "Trim and Stitch" button to process the files in the queue.
+   - Specify the output file location in the file dialog that appears.
+   - After processing, you will have the option to play the merged video with VLC.
+
+7. **Clear the Queue**:
+   - Click "Clear All" to remove all files from the queue.
+
+8. **Exit the Application**:
+   - Click "Exit" to close the application.
+
 
 - **Dependencies**: The tool requires the following dependencies to be installed:
   1. **FFmpeg**: Used for video trimming and stitching. Make sure it is available in your system's PATH. Download FFmpeg from [here](https://ffmpeg.org/download.html).
