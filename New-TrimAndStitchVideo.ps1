@@ -408,7 +408,7 @@ $addFileButton.Add_Click({
         $item.SubItems.Add($($fileDetails["Duration"]).ToString())
         $item.SubItems.Add($fileDetails["TempFile"])
         $listView.Items.Add($item)
-        
+
         # Clear the text boxes and enable the Add to Array button
         $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
         $addFileButton.Enabled = $true
@@ -437,7 +437,6 @@ $playSelectedTrim.Add_Click({
 
         # Launch the selected file with default media player
         try {
-            #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
             Start-Process -FilePath "$($fileDetails.TempFile)"
         }
         catch {
@@ -449,19 +448,13 @@ $playSelectedTrim.Add_Click({
 # Create an event handler for the Delete Selected button click
 $deleteButton.Add_Click({
     if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]
-        $fileDetails = @{
-            "FullName" = $selectedItem.SubItems[0].Text
-            "StartTime" = $selectedItem.SubItems[1].Text
-            "StopTime" = $selectedItem.SubItems[2].Text
-        }
-
-        # Find the corresponding file details in the array and remove it
-        #$fileDetailsArray = $fileDetailsArray | Where-Object { $_.FullName -ne $fileDetails.FullName }
+        $selectedItem = $listView.SelectedItems[0]        
         
         # Remove the selected item from the ListView
         $listView.Items.Remove($selectedItem)
-            
+        
+        # Find the corresponding file details in the array and remove it
+        $script:fileDetailsArray = Set-FileDetailArray
 
         # Clear the text boxes and enable the Add to Array button
         $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
@@ -487,8 +480,6 @@ $listView.Add_SelectedIndexChanged({
         $playSelectedTrim.Enabled = $true
         $moveUpButton.Enabled = $true
         $moveDownButton.Enabled = $true
-        #$tempVideoPath["TempFile"] = $null
-
     } else {
         $deleteButton.Enabled = $false
         $playSelectedTrim.Enabled = $false
