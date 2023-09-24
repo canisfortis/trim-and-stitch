@@ -36,6 +36,17 @@ function Get-TotalDuration {
     $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
     return $totalTimeSpan
 }
+
+
+# Function to play ad video
+Function Start-Video($videoPath) {
+    try {
+        Start-Process -FilePath $videoPath
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Merged video could not be played.")
+    }
+}
 #endregion
 
 
@@ -210,6 +221,12 @@ catch {
 
 
 #region
+# Create an event handler for the Play Trimmed File button click
+$playButton.Add_Click({
+    Start-Video $mergedVideo
+})
+
+
 # Create an event handler for the Trim and Stitch button click
 $trimAndStitchButton.Add_Click({
     $saveFileDialog = New-Object Windows.Forms.SaveFileDialog
@@ -251,25 +268,13 @@ $trimAndStitchButton.Add_Click({
         else {
             Copy-Item $trimmedVideo -Destination $mergedVideo
         }
-        
-        
+
         # Display a message box with an OK button
         $result = [System.Windows.Forms.MessageBox]::Show("Trimming and stitching completed. Do you want to play the merged video now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
 
         if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
             # User clicked "Yes," so open the merged video
-            # Create an event handler for the Play Trimmed File button click
-            $playButton.Add_Click({
-                
-                # Launch the selected file with default media player
-                try {
-                    #$process = [Diagnostics.Process]::Start("vlc.exe", "`"$($fileDetails.TempFile)`"")
-                    Start-Process -FilePath "$($mergedVideo)"
-                }
-                catch {
-                    [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
-                }
-            })
+            Start-Video $mergedVideo
         }
 
         #clear up temp files
