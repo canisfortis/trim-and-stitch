@@ -70,7 +70,7 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
 
 - **Dependencies**: The tool requires the following dependencies to be installed:
   1. **FFmpeg**: Used for video trimming and stitching. Make sure it is available in your system's PATH. Download FFmpeg from [here](https://ffmpeg.org/download.html).
-  2. **VLC media player**: Required for playing video files. Ensure VLC is installed and accessible via your system's PATH. Get VLC from [here](https://www.videolan.org/vlc/).
+  2. **Default Media Player capable of playing the selected source video types**: Required for playing video files. VLC is one such video player. Get VLC from [here](https://www.videolan.org/vlc/).
 
 ## Usage
 
