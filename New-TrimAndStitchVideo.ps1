@@ -39,7 +39,7 @@ function Get-TotalDuration {
 
 
 # Function to play ad video
-Function Start-Video($videoPath) {
+Function Start-SourceVideo($videoPath) {
     try {
         Start-Process -FilePath $videoPath
     }
@@ -47,6 +47,106 @@ Function Start-Video($videoPath) {
         [System.Windows.Forms.MessageBox]::Show("Merged video could not be played.")
     }
 }
+
+function Remove-SelectedTrim {
+    param (
+        [System.Windows.Forms.ListView]$listView
+    )
+
+    # Deletion logic
+    if ($listView.SelectedItems.Count -gt 0) {
+        $selectedItem = $listView.SelectedItems[0]        
+        
+        # Remove the selected item from the ListView
+        $listView.Items.Remove($selectedItem)
+        
+        # Find the corresponding file details in the array and remove it
+        $script:fileDetailsArray = Set-FileDetailArray
+
+        # Clear the text boxes and enable the Add to Array button
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
+
+        # Disable buttons that rely on items in the list
+        if ($listView.Items.Count -eq 0) {
+            $deleteButton.Enabled = $false
+            $playSelectedTrim.Enabled = $false
+            $clearAllButton.Enabled = $false
+            $exportIndividualTrimButton.Enabled = $false
+            $trimAndStitchButton.Enabled = $false
+            $moveUpButton.Enabled = $false
+            $moveDownButton.Enabled = $false
+            
+        }
+    }
+}
+
+function Move-TrimVideoItemDown {
+    param (
+        [System.Windows.Forms.ListView]$listView
+    )
+
+    # Move item down logic
+    if ($listView.SelectedItems.Count -gt 0) {
+        $selectedItem = $listView.SelectedItems[0]
+        $selectedIndex = $selectedItem.Index
+
+        # Check if the selected item is not already at the bottom
+        if ($selectedIndex -lt ($listView.Items.Count - 1)) {
+            # Swap the selected item with the item below it
+            $listView.Items.RemoveAt($selectedIndex)
+            $listView.Items.Insert($selectedIndex + 1, $selectedItem)
+            $listView.Items[$selectedIndex + 1].Selected = $true
+        }
+    }
+}
+
+function Move-TrimVideoItemUp {
+    param (
+        [System.Windows.Forms.ListView]$listView
+    )
+
+    # Move item up logic
+    if ($listView.SelectedItems.Count -gt 0) {
+        $selectedItemIndex = $listView.SelectedIndices[0]  # Get the index of the selected item
+
+        # Move the selected item up in the list
+        if ($selectedItemIndex -gt 0) {
+            $selectedItem = $listView.Items[$selectedItemIndex].Clone()  # Clone the selected item
+            $listView.Items.RemoveAt($selectedItemIndex)  # Remove the selected item
+            $listView.Items.Insert($selectedItemIndex - 1, $selectedItem)  # Insert the cloned item one position above
+
+            # Update the selected item index and reselect it
+            $listView.Items[$selectedItemIndex - 1].Selected = $true
+            $selectedItemIndex = $selectedItemIndex - 1
+        }
+    }
+}
+
+function Start-TrimmedVideo {
+
+    # Video playback logic
+    if ($listView.SelectedItems.Count -gt 0) {
+        $selectedItem = $listView.SelectedItems[0]
+        $fileDetails = @{
+            "FullName" = $selectedItem.SubItems[0].Text
+            "StartTime" = $selectedItem.SubItems[1].Text
+            "StopTime" = $selectedItem.SubItems[2].Text
+            "Duration" = $selectedItem.SubItems[3].Text
+            "TempFile" = $selectedItem.SubItems[4].Text
+        }
+
+        # Launch the selected file with default media player
+        try {
+            Start-Process -FilePath "$($fileDetails.TempFile)"
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
+        }
+    }
+}
+
+
+
 #endregion
 
 
@@ -223,7 +323,7 @@ catch {
 #region
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
-    Start-Video "$($file.Path)"
+    Start-SourceVideo "$($file.Path)"
 })
 
 
@@ -274,7 +374,7 @@ $trimAndStitchButton.Add_Click({
 
         if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
             # User clicked "Yes," so open the merged video
-            Start-Video $mergedVideo
+            Start-SourceVideo $mergedVideo
         }
 
         #clear up temp files
@@ -425,52 +525,12 @@ $addFileButton.Add_Click({
 
 # Create an event handler for the Play selected trim button click
 $playSelectedTrim.Add_Click({
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]
-        $fileDetails = @{
-            "FullName" = $selectedItem.SubItems[0].Text
-            "StartTime" = $selectedItem.SubItems[1].Text
-            "StopTime" = $selectedItem.SubItems[2].Text
-            "Duration" = $selectedItem.SubItems[3].Text
-            "TempFile" = $selectedItem.SubItems[4].Text
-        }
-
-        # Launch the selected file with default media player
-        try {
-            Start-Process -FilePath "$($fileDetails.TempFile)"
-        }
-        catch {
-            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
-        }
-    }
+    Start-TrimmedVideo 
 })
 
 # Create an event handler for the Delete Selected button click
 $deleteButton.Add_Click({
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]        
-        
-        # Remove the selected item from the ListView
-        $listView.Items.Remove($selectedItem)
-        
-        # Find the corresponding file details in the array and remove it
-        $script:fileDetailsArray = Set-FileDetailArray
-
-        # Clear the text boxes and enable the Add to Array button
-        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
-
-        # Disable buttons that rely on items in the list
-        if ($listView.Items.Count -eq 0) {
-            $deleteButton.Enabled = $false
-            $playSelectedTrim.Enabled = $false
-            $clearAllButton.Enabled = $false
-            $exportIndividualTrimButton.Enabled = $false
-            $trimAndStitchButton.Enabled = $false
-            $moveUpButton.Enabled = $false
-            $moveDownButton.Enabled = $false
-            
-        }
-    }
+    Remove-SelectedTrim $listView
 })
 
 # Create an event handler for the ListView SelectedIndexChanged event
@@ -488,36 +548,12 @@ $listView.Add_SelectedIndexChanged({
 
 # Create an event handler for the Move Up button click
 $moveUpButton.Add_Click({
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItemIndex = $listView.SelectedIndices[0]  # Get the index of the selected item
-
-        # Move the selected item up in the list
-        if ($selectedItemIndex -gt 0) {
-            $selectedItem = $listView.Items[$selectedItemIndex].Clone()  # Clone the selected item
-            $listView.Items.RemoveAt($selectedItemIndex)  # Remove the selected item
-            $listView.Items.Insert($selectedItemIndex - 1, $selectedItem)  # Insert the cloned item one position above
-
-            # Update the selected item index and reselect it
-            $listView.Items[$selectedItemIndex - 1].Selected = $true
-            $selectedItemIndex = $selectedItemIndex - 1
-        }
-    }
+    Move-TrimVideoItemUp $listView    
 })
 
 # Create an event handler for the Move Down button click
 $moveDownButton.Add_Click({
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]
-        $selectedIndex = $selectedItem.Index
-
-        # Check if the selected item is not already at the bottom
-        if ($selectedIndex -lt ($listView.Items.Count - 1)) {
-            # Swap the selected item with the item below it
-            $listView.Items.RemoveAt($selectedIndex)
-            $listView.Items.Insert($selectedIndex + 1, $selectedItem)
-            $listView.Items[$selectedIndex + 1].Selected = $true
-        }
-    }
+    Move-TrimVideoItemDown $listView
 })
 
 # Create an event handler for the Exit button click
@@ -539,6 +575,8 @@ $clearAllButton.Add_Click({
     $clearAllButton.Enabled = $false
     $exportIndividualTrimButton.Enabled = $false
     $trimAndStitchDetailsTable.Text = "Total duration of stitched video: "
+    $startTimeTextBox.Text = "00:00:00"
+    $stopTimeTextBox.Text = "00:00:00"
 })
 
 #endregion
