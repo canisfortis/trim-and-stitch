@@ -159,7 +159,7 @@ function Edit-TrimVideoItem {
             "TempFile" = $selectedItem.SubItems[4].Text
         }
 
-        <# Disable the Add to Array button
+        # Disable the Add to Array button
         $addFileButton.Enabled = $false
 
         # Disable the Play Trimmed File button
@@ -200,7 +200,7 @@ function Edit-TrimVideoItem {
 
         # Disable the ListView
         $listView.Enabled = $false
-        #>
+        
 
         # Create a new form to edit the trim details
         $editForm = New-Object Windows.Forms.Form
@@ -252,6 +252,24 @@ function Edit-TrimVideoItem {
             $trimDuration = $fileDetails.Duration
             ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
             Start-Process -FilePath "$($fileDetails.TempFile)"
+        })
+
+        #there needs to be away to enable the buttsons again after the edit form is closed using the X button
+        #re-enable buttons on close
+        $editForm.Add_FormClosed({
+            $addFileButton.Enabled = $true
+            $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
+            $clearAllButton.Enabled = $true
+            $exportIndividualTrimButton.Enabled = $true
+            $playButton.Enabled = $true
+            $addMp4Button.Enabled = $true
+            $startTimeTextBox.Enabled = $true
+            $stopTimeTextBox.Enabled = $true
+            $listView.Enabled = $true
+            $editTrim.Enabled = $true
+            $deleteButton.Enabled = $true
+            $moveUpButton.Enabled = $true
+            $moveDownButton.Enabled = $true
         })
 
         #Button to save the changes to the listview
