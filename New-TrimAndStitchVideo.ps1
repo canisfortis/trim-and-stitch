@@ -261,6 +261,7 @@ function Edit-TrimVideoItem {
             $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
             $clearAllButton.Enabled = $true
             $exportIndividualTrimButton.Enabled = $true
+            $exportIndividualTrimGifButton.Enabled = $true
             $playButton.Enabled = $true
             $addMp4Button.Enabled = $true
             $startTimeTextBox.Enabled = $true
@@ -297,6 +298,7 @@ function Edit-TrimVideoItem {
             $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
             $clearAllButton.Enabled = $true
             $exportIndividualTrimButton.Enabled = $true
+            $exportIndividualTrimGifButton.Enabled = $true
             $playButton.Enabled = $true
             $addMp4Button.Enabled = $true
             $startTimeTextBox.Enabled = $true
@@ -317,7 +319,7 @@ function Edit-TrimVideoItem {
 
 
         
-        #endregion
+        
 
         # Show the form
         $editForm.ShowDialog()
@@ -348,6 +350,7 @@ $clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLoca
 $TrimAndStitchButtonLocation = @{X=20;Y=510}
 $exitButtonLocation = @{X=20;Y=600}
 $exportIndividualTrimsButtonLocation = @{X=20;Y=560}
+$exportIndividualTrimsGifButtonLocation = @{X=$exportIndividualTrimsButtonLocation.X+170;Y=$exportIndividualTrimsButtonLocation.Y}
 
 # Create a form
 $form = New-Object Windows.Forms.Form
@@ -478,6 +481,13 @@ $exportIndividualTrimButton.Text = "Export individual trims"
 $exportIndividualTrimButton.Location = New-Object Drawing.Point($exportIndividualTrimsButtonLocation.X, $exportIndividualTrimsButtonLocation.Y)
 $exportIndividualTrimButton.Width = 150
 $exportIndividualTrimButton.Enabled = $false
+
+#Create a button to export an individual trim as a gif.
+$exportIndividualTrimGifButton = New-Object Windows.Forms.Button
+$exportIndividualTrimGifButton.Text = "Export individual trims as gif"
+$exportIndividualTrimGifButton.Location = New-Object Drawing.Point($exportIndividualTrimsGifButtonLocation.X, $exportIndividualTrimsGifButtonLocation.Y)
+$exportIndividualTrimGifButton.Width = 170
+$exportIndividualTrimGifButton.Enabled = $false
 
 # Create a button to Trim and Stitch
 $trimAndStitchButton = New-Object Windows.Forms.Button
@@ -623,6 +633,58 @@ $exportIndividualTrimButton.Add_Click({
     }
 })
 
+# Create an event handler for the Export Individual Trims as gif button click
+$exportIndividualTrimGifButton.Add_Click({
+    $saveFileDialog = New-Object Windows.Forms.FolderBrowserDialog
+    $saveFileDialog.Description = "Select a folder to save the individual trims"
+    $saveFileDialog.ShowNewFolderButton = $true
+
+    if ($saveFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $saveFolder = $saveFileDialog.SelectedPath
+
+        # Create an array to store items and subitems
+        $trimData = @()
+
+        # Loop through each item in the ListView
+        $trimData = foreach ($item in $listView.Items) {
+            # Create an ordered dictionary to store item data
+            [ordered]@{
+                "File" = $item.SubItems[0].Text
+                "Start Time" = $item.SubItems[1].Text
+                "Stop Time" = $item.SubItems[2].Text
+                "Duration" = $item.SubItems[3].Text
+            }
+        }
+        
+        $count = 1
+        
+        foreach ($trim in $trimData) {
+            $trimmedVideo = "$saveFolder\trimmed video $(Get-Date -format 'yyyyMMddHHmmss')_$count.gif"
+            $trimDuration = [TimeSpan]::Parse($trim."Stop Time") - [TimeSpan]::Parse($trim."Start Time")
+            ffmpeg -y -i $trim.file -filter_complex "fps=15,split[v1][v2]; [v1]palettegen=stats_mode=full [palette]; [v2][palette]paletteuse=dither=sierra2_4a" -vsync 0 $trimmedVideo -loglevel quiet
+            $count++
+        }
+
+        
+        # Display a message box with an OK button
+        $result = [System.Windows.Forms.MessageBox]::Show("Trimming completed. Do you want to open the folder now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
+
+        if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
+            # User clicked "Yes," so open the merged video
+            try {
+                $process = [Diagnostics.Process]::Start("explorer.exe", "`"$saveFolder`"")
+            } 
+            catch {
+                [System.Windows.Forms.MessageBox]::Show("Folder not found.")
+            }
+        }
+
+        #clear up temp files
+        Remove-Item $env:TEMP\tempvideo*.mp4
+        
+    }
+})
+
 # Create an event handler for the Add MP4 File button click
 $addMp4Button.Add_Click({
     
@@ -701,7 +763,8 @@ $addFileButton.Add_Click({
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
         $clearAllButton.Enabled = $true
-        $exportIndividualTrimButton.Enabled = $true        
+        $exportIndividualTrimButton.Enabled = $true
+        $exportIndividualTrimGifButton.Enabled = $true        
     } else {
         # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
@@ -793,6 +856,7 @@ $form.Controls.Add($moveDownButton)
 $form.Controls.Add($trimAndStitchButton)
 $form.Controls.Add($trimAndStitchDetailsTable)
 $form.Controls.Add($exportIndividualTrimButton)
+$form.Controls.Add($exportIndividualTrimGifButton)
 $form.Controls.Add($playButton)
 $form.Controls.Add($exitButton)
 $form.Controls.Add($clearAllButton)
