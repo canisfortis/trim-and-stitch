@@ -87,12 +87,32 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
    - Click "Add to Array" to add the file to the trimming queue.
    - You can also play the source video to verify the trim times.
 
-3. **Export Individual Trimmed Segments**:
+3. **Play Selected Clips**:
+
+   The MP4 Stitch and Trim Tool allows you to preview and play selected clips before performing any trimming or stitching operations. This feature is particularly useful when you want to verify the content of a specific clip or ensure that the trim times are set correctly.
+
+   To use the "Edit Trim" button and play selected clips:
+
+   1. Add MP4 files to the trimming and stitching queue using the "Add MP4 File" button.
+   2. Specify the start and stop times for trimming each file in the format `hh:mm:ss`.
+   3. Click the "Add to Array" button to add the file to the trimming queue.
+   4. To play a selected clip, click the "Edit Trim" button next to the respective file in the trimming queue.
+   5. The selected clip will be played in the built-in video player, allowing you to preview its content.
+   6. Use the playback controls (play, pause, seek) to navigate through the clip and verify its content.
+   7. If needed, adjust the trim times for the selected clip and click the "Update Trim" button to save the changes.
+   8. Repeat steps 4-7 for other clips as necessary.
+
+   By using the "Edit Trim" button, you can easily fine-tune the trim times and ensure that your selected clips are trimmed accurately according to your requirements.
+
+   Enjoy the convenience of previewing and editing trim times with the MP4 Stitch and Trim Tool!
+
+
+4. **Export Individual Trimmed Segments**:
    - After specifying trim times, use the "Export Individual Trims" button to save each trimmed segment as a separate MP4 file.
    - Select a destination folder to save the individual trims.
    - This feature is useful when you need to keep each trimmed segment as a separate file.
 
-4. **Export Individual Trims to GIF**
+5. **Export Individual Trims to GIF**
 
    The MP4 Stitch and Trim Tool also provides the ability to export individual trimmed segments as GIF files. This feature can be useful when you want to create animated GIFs from specific parts of your videos.
 
@@ -109,23 +129,23 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
    Enjoy creating animated GIFs from your trimmed video segments with the MP4 Stitch and Trim Tool!
 
 
-5. **Play Selected Clips**:
+6. **Play Selected Clips**:
    - Select a clip in the ListView and click "Play Selected File" to preview it with VLC media player.
 
-6. **Manage the Queue**:
+7. **Manage the Queue**:
    - Use the ListView to view and manage the files in the queue.
    - Reorder files by selecting an item and clicking "Move Up" or "Move Down."
    - To delete a file from the queue, select it and click "Delete Selected."
 
-7. **Trim and Stitch**:
+8. **Trim and Stitch**:
    - Click the "Trim and Stitch" button to process the files in the queue.
    - Specify the output file location in the file dialog that appears.
    - After processing, you will have the option to play the merged video with VLC.
 
-8. **Clear the Queue**:
+9. **Clear the Queue**:
    - Click "Clear All" to remove all files from the queue.
 
-9. **Exit the Application**:
+10. **Exit the Application**:
    - Click "Exit" to close the application.
 
 
