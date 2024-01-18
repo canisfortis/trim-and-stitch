@@ -96,16 +96,11 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
    1. Add MP4 files to the trimming and stitching queue using the "Add MP4 File" button.
    2. Specify the start and stop times for trimming each file in the format `hh:mm:ss`.
    3. Click the "Add to Array" button to add the file to the trimming queue.
-   4. To play a selected clip, click the "Edit Trim" button next to the respective file in the trimming queue.
-   5. The selected clip will be played in the built-in video player, allowing you to preview its content.
-   6. Use the playback controls (play, pause, seek) to navigate through the clip and verify its content.
-   7. If needed, adjust the trim times for the selected clip and click the "Update Trim" button to save the changes.
-   8. Repeat steps 4-7 for other clips as necessary.
-
-   By using the "Edit Trim" button, you can easily fine-tune the trim times and ensure that your selected clips are trimmed accurately according to your requirements.
-
-   Enjoy the convenience of previewing and editing trim times with the MP4 Stitch and Trim Tool!
-
+   4. Select the clip, click the "Edit Trim" button
+   5. Set the new start and stop times
+   6. Click the preview button to see if the new times work, adjust as necessary.
+   7. Once happy, click Save. The duration and start/stop of the clip has now been updated.
+   
 
 4. **Export Individual Trimmed Segments**:
    - After specifying trim times, use the "Export Individual Trims" button to save each trimmed segment as a separate MP4 file.
