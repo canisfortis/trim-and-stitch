@@ -1,6 +1,24 @@
+
 # MP4 Stitch and Trim Tool
 
 The MP4 Stitch and Trim Tool is a user-friendly Windows application that simplifies the process of trimming and stitching together MP4 video files. This tool is designed for ease of use, allowing you to select video clips, set start and stop times for trimming, and create a merged video with just a few clicks.
+
+## New Features
+
+The latest version of the MP4 Stitch and Trim Tool includes the following new features:
+
+1. **Batch Processing**: You can now select multiple video clips at once and apply the same trim settings to all of them. This saves time and effort when working with a large number of files.
+
+2. **Custom Output Settings**: You have the option to export individual clips as a gif - this will be the only conversion type this tool uses.
+
+3. **Preview Trimming**: Before applying the trim settings, you can preview the trimmed segment of each video clip. This helps you ensure that the selected start and stop times are accurate.
+
+4. **Enhanced User Interface**: The user interface has been improved for better usability and a more intuitive experience. The tool now provides clear instructions and visual cues to guide you through the trimming and stitching process.
+
+5. **Error Handling**: The tool now handles errors more gracefully and provides informative error messages in case of any issues during the trimming or stitching process.
+
+We hope that these new features enhance your video editing workflow and make the MP4 Stitch and Trim Tool even more powerful and convenient to use.
+
 
 ## About FFmpeg Copy Mode
 
@@ -74,23 +92,40 @@ The MP4 Stitch and Trim Tool offers a range of features to streamline your video
    - Select a destination folder to save the individual trims.
    - This feature is useful when you need to keep each trimmed segment as a separate file.
 
-4. **Play Selected Clips**:
+4. **Export Individual Trims to GIF**
+
+   The MP4 Stitch and Trim Tool also provides the ability to export individual trimmed segments as GIF files. This feature can be useful when you want to create animated GIFs from specific parts of your videos.
+
+   To export individual trims to GIF:
+
+   1. After specifying trim times for each file, click the "Export Individual Trims" button.
+   2. In the export options dialog, select the "GIF" format.
+   3. Choose a destination folder to save the GIF files.
+   4. Click "Export" to start the export process.
+   5. The tool will generate a separate GIF file for each trimmed segment, preserving the animation and quality of the original video.
+
+   Note: The export to GIF feature requires additional dependencies, such as ImageMagick, to be installed on your system. Make sure to install these dependencies before using this feature.
+
+   Enjoy creating animated GIFs from your trimmed video segments with the MP4 Stitch and Trim Tool!
+
+
+5. **Play Selected Clips**:
    - Select a clip in the ListView and click "Play Selected File" to preview it with VLC media player.
 
-5. **Manage the Queue**:
+6. **Manage the Queue**:
    - Use the ListView to view and manage the files in the queue.
    - Reorder files by selecting an item and clicking "Move Up" or "Move Down."
    - To delete a file from the queue, select it and click "Delete Selected."
 
-6. **Trim and Stitch**:
+7. **Trim and Stitch**:
    - Click the "Trim and Stitch" button to process the files in the queue.
    - Specify the output file location in the file dialog that appears.
    - After processing, you will have the option to play the merged video with VLC.
 
-7. **Clear the Queue**:
+8. **Clear the Queue**:
    - Click "Clear All" to remove all files from the queue.
 
-8. **Exit the Application**:
+9. **Exit the Application**:
    - Click "Exit" to close the application.
 
 
