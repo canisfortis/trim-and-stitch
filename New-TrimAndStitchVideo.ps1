@@ -147,6 +147,8 @@ $listView.Location = New-Object Drawing.Point(20, 280)
 $listView.Width = 900
 $listView.Height = 200
 $listView.View = [System.Windows.Forms.View]::Details
+$listView.HideSelection = $false
+$listView.FullRowSelect = $true
 
 # Add columns to the ListView
 $listView.Columns.Add("File", 300)
