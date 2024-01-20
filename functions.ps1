@@ -196,38 +196,6 @@ function Move-TrimVideoItemDown {
         }
     }
 }
-function Move-TrimVideoItemDown {
-    <#
-    .SYNOPSIS
-    Moves the selected trim item down in the ListView.
-
-    .DESCRIPTION
-    This function moves the currently selected item in the ListView one position down, unless it is already at the bottom of the list.
-
-    .PARAMETER listView
-    The ListView control containing the trim items.
-    #>
-
-    param (
-        [Parameter(Mandatory = $true)]
-        [System.Windows.Forms.ListView]$listView
-    )
-
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedIndex = $listView.SelectedIndices[0]
-
-        # Check if the selected item is not already at the bottom
-        if ($selectedIndex -lt ($listView.Items.Count - 1)) {
-            # Swap the selected item with the item below it
-            $selectedItem = $listView.Items[$selectedIndex]
-            $listView.Items.RemoveAt($selectedIndex)
-            $listView.Items.Insert($selectedIndex + 1, $selectedItem)
-            $listView.Items[$selectedIndex + 1].Selected = $true
-            $listView.EnsureVisible($selectedIndex + 1)
-        }
-    }
-}
-
 #function to move the selected item up in the listview
 function Move-TrimVideoItemUp {
     <#
