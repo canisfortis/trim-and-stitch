@@ -3,6 +3,15 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.IO
 Add-Type -AssemblyName System
 
+
+#add some checking if this file exists. If not pop a message box and exit.
+
+# Import the functions
+#check if the functions file exists
+if (!(Test-Path -Path .\functions.ps1)) {
+    [System.Windows.Forms.MessageBox]::Show("The functions file is missing. Please download the functions file and try again.")
+    exit
+}
 import-module .\functions.ps1 -Force
 
 
@@ -437,7 +446,7 @@ $addFileButton.Add_Click({
 
 })
 
-# Add event handlers for each text box
+<# Add event handlers for each text box
 $startTimeHoursTextBox.Add_TextChanged({
     ValidateTimeInput $startTimeHoursTextBox 23
 })
@@ -447,6 +456,7 @@ $startTimeMinutesTextBox.Add_TextChanged({
 $startTimeSecondsTextBox.Add_TextChanged({
     ValidateTimeInput $startTimeSecondsTextBox 59
 })
+#>
 
 #function to play the trimmed video before adding to list
 $previewTrimDurationVideoButton.Add_Click({
