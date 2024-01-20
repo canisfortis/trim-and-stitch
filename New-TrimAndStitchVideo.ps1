@@ -6,39 +6,6 @@ Add-Type -AssemblyName System
 import-module .\functions.ps1 -Force
 
 
-# Add event handlers for each text box
-$startTimeHoursTextBox.Add_TextChanged({
-    ValidateTimeInput $startTimeHoursTextBox 23
-})
-$startTimeMinutesTextBox.Add_TextChanged({
-    ValidateTimeInput $startTimeMinutesTextBox 59
-})
-$startTimeSecondsTextBox.Add_TextChanged({
-    ValidateTimeInput $startTimeSecondsTextBox 59
-})
-
-
-#endregion
-
-#region
-
-
-$DurationLocation = @{X=20;Y=60}
-$AddedFileLocation = @{X=20;Y=90}
-$PlayButtonLocation = @{X=20;Y=120}
-$ListViewLocation = @{X=20;Y=280}
-$AddFileButtonLocation = @{X=20;Y=250}
-$playSelectedTrimLocation = @{X=$AddFileButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$EditTrimButtonLocation = @{X=$playSelectedTrimLocation.X+130;Y=$AddFileButtonLocation.Y}
-$DeleteButtonLocation = @{X=$EditTrimButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$MoveUpButtonLocation = @{X=$DeleteButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$MoveDownButtonLocation = @{X=$MoveUpButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
-$TrimAndStitchButtonLocation = @{X=20;Y=510}
-$exitButtonLocation = @{X=20;Y=600}
-$exportIndividualTrimsButtonLocation = @{X=20;Y=570}
-$exportIndividualTrimsGifButtonLocation = @{X=$exportIndividualTrimsButtonLocation.X+170;Y=$exportIndividualTrimsButtonLocation.Y}
-
 # Create a form
 $form = New-Object Windows.Forms.Form
 $form.Text = "MP4 Stitch and Trim Tool"
@@ -158,25 +125,25 @@ $form.Controls.Add($stopTimeSecondsNumericUpDown)
 # Create a text box to display the duration
 $durationLabel = New-Object Windows.Forms.Label
 $durationLabel.Text = "Duration: Add an MP4 file."
-$durationLabel.Location = New-Object Drawing.Point($DurationLocation.X, $DurationLocation.Y)
+$durationLabel.Location = New-Object Drawing.Point(20 ,60)
 $durationLabel.Width = 300
 
 # Create a text box to display the duration
 $addedFileLabel = New-Object Windows.Forms.Label
 $addedFileLabel.Text = "No files currently added."
-$addedFileLabel.Location = New-Object Drawing.Point($AddedFileLocation.X, $AddedFileLocation.Y)
+$addedFileLabel.Location = New-Object Drawing.Point(20, 90)
 $addedFileLabel.Width = 700
 
 # Create a button to play the current trim file
 $playButton = New-Object Windows.Forms.Button
 $playButton.Text = "Play source file"
-$playButton.Location = New-Object Drawing.Point($PlayButtonLocation.X, $PlayButtonLocation.Y)
+$playButton.Location = New-Object Drawing.Point(20, 120)
 $playButton.Width = 120
 $playButton.Enabled = $false
 
 # Create a ListView to display file details with columns
 $listView = New-Object Windows.Forms.ListView
-$listView.Location = New-Object Drawing.Point($ListViewLocation.X, $ListViewLocation.Y)
+$listView.Location = New-Object Drawing.Point(20, 280)
 $listView.Width = 900
 $listView.Height = 200
 $listView.View = [System.Windows.Forms.View]::Details
@@ -190,14 +157,14 @@ $listView.Columns.Add("Duration", 150)
 # Create a button to add the file details to the array
 $addFileButton = New-Object Windows.Forms.Button
 $addFileButton.Text = "Add to trim list"
-$addFileButton.Location = New-Object Drawing.Point($AddFileButtonLocation.X, $AddFileButtonLocation.Y)
+$addFileButton.Location = New-Object Drawing.Point(20, 250)
 $addFileButton.Width = 100
 $addFileButton.Enabled = $false
 
 # Create a button to open the selected file in the default media player
 $playSelectedTrim = New-Object Windows.Forms.Button
 $playSelectedTrim.Text = "Play selected file"
-$playSelectedTrim.Location = New-Object Drawing.Point($playSelectedTrimLocation.X, $playSelectedTrimLocation.Y)
+$playSelectedTrim.Location = New-Object Drawing.Point(130, 250)
 $playSelectedTrim.Width = 110
 $playSelectedTrim.Enabled = $false
 
@@ -211,55 +178,55 @@ $editTrim.Enabled = $false
 # Create a button to delete the selected item from the ListView
 $deleteButton = New-Object Windows.Forms.Button
 $deleteButton.Text = "Delete selected"
-$deleteButton.Location = New-Object Drawing.Point($DeleteButtonLocation.X, $DeleteButtonLocation.Y)
+$deleteButton.Location = New-Object Drawing.Point(370, 250)
 $deleteButton.Width = 100
 $deleteButton.Enabled = $false
 
 # Create a button to move the selected item up
 $moveUpButton = New-Object Windows.Forms.Button
 $moveUpButton.Text = "Move up"
-$moveUpButton.Location = New-Object Drawing.Point($MoveUpButtonLocation.X, $MoveUpButtonLocation.Y)
+$moveUpButton.Location = New-Object Drawing.Point(480, 250)
 $moveUpButton.Width = 100
 $moveUpButton.Enabled = $false
 
 # Create a button to move the selected item down
 $moveDownButton = New-Object Windows.Forms.Button
 $moveDownButton.Text = "Move down"
-$moveDownButton.Location = New-Object Drawing.Point($MoveDownButtonLocation.X, $MoveDownButtonLocation.Y)
+$moveDownButton.Location = New-Object Drawing.Point(590, 250)
 $moveDownButton.Width = 100
 $moveDownButton.Enabled = $false
 
 # Create a button to exit the application
 $exitButton = New-Object Windows.Forms.Button
 $exitButton.Text = "Exit"
-$exitButton.Location = New-Object Drawing.Point($exitButtonLocation.X, $exitButtonLocation.Y)
+$exitButton.Location = New-Object Drawing.Point(20, 600)
 $exitButton.Width = 100
 
 # Create a button to clear the list
 $clearAllButton = New-Object Windows.Forms.Button
 $clearAllButton.Text = "Clear all"
-$clearAllButton.Location = New-Object Drawing.Point($clearAllButtonLocation.X, $clearAllButtonLocation.Y)
+$clearAllButton.Location = New-Object Drawing.Point(700, 250)
 $clearAllButton.Width = 100
 $clearAllButton.Enabled = $false
 
 # Create a button to just export individual trims
 $exportIndividualTrimButton = New-Object Windows.Forms.Button
 $exportIndividualTrimButton.Text = "Export individual trims"
-$exportIndividualTrimButton.Location = New-Object Drawing.Point($exportIndividualTrimsButtonLocation.X, $exportIndividualTrimsButtonLocation.Y)
+$exportIndividualTrimButton.Location = New-Object Drawing.Point(20, 570)
 $exportIndividualTrimButton.Width = 150
 $exportIndividualTrimButton.Enabled = $false
 
 #Create a button to export an individual trim as a gif.
 $exportIndividualTrimGifButton = New-Object Windows.Forms.Button
 $exportIndividualTrimGifButton.Text = "Export individual trims as gif"
-$exportIndividualTrimGifButton.Location = New-Object Drawing.Point($exportIndividualTrimsGifButtonLocation.X, $exportIndividualTrimsGifButtonLocation.Y)
+$exportIndividualTrimGifButton.Location = New-Object Drawing.Point(190, 570)
 $exportIndividualTrimGifButton.Width = 170
 $exportIndividualTrimGifButton.Enabled = $false
 
 # Create a button to Trim and Stitch
 $trimAndStitchButton = New-Object Windows.Forms.Button
 $trimAndStitchButton.Text = "Trim and stitch"
-$trimAndStitchButton.Location = New-Object Drawing.Point($TrimAndStitchButtonLocation.X, $TrimAndStitchButtonLocation.Y)
+$trimAndStitchButton.Location = New-Object Drawing.Point(20, 510)
 $trimAndStitchButton.Width = 100
 $trimAndStitchButton.Enabled = $false
 
@@ -279,20 +246,11 @@ catch {
 }
 
 
-
-
-#endregion
-
-
-#region
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
     #[System.Windows.Forms.MessageBox]::Show($filePath)
     Start-SourceVideo $filePath
 })
-
-
-
 
 # Create an event handler for the Trim and Stitch button click
 $trimAndStitchButton.Add_Click({
@@ -477,9 +435,16 @@ $addFileButton.Add_Click({
 
 })
 
-
-
-
+# Add event handlers for each text box
+$startTimeHoursTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeHoursTextBox 23
+})
+$startTimeMinutesTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeMinutesTextBox 59
+})
+$startTimeSecondsTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeSecondsTextBox 59
+})
 
 #function to play the trimmed video before adding to list
 $previewTrimDurationVideoButton.Add_Click({
@@ -490,7 +455,6 @@ $previewTrimDurationVideoButton.Add_Click({
 $editTrim.Add_Click({
     Edit-TrimVideoItem $listView
 })
-
 
 # Create an event handler for the Play selected trim button click
 $playSelectedTrim.Add_Click({
@@ -549,9 +513,7 @@ $clearAllButton.Add_Click({
     $editTrim.Enabled = $false   
 })
 
-#endregion
 
-#region
 # Add controls to the form
 $form.Controls.Add($addMp4Button)
 $form.Controls.Add($startTimeLabel)
@@ -572,7 +534,7 @@ $form.Controls.Add($exportIndividualTrimGifButton)
 $form.Controls.Add($playButton)
 $form.Controls.Add($exitButton)
 $form.Controls.Add($clearAllButton)
-#endregion
+
 
 # Show the form
 $form.ShowDialog()
