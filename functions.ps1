@@ -433,16 +433,18 @@ function PreviewTrimmedVideo {
     $previewStartTime = $timeSpans["StartTimeSpan"]
     $previewStopTime = $timeSpans["StopTimeSpan"]
     $previewDuration = $timeSpans["DurationTimeSpan"]
+    $sourceVideoDuration = [TimeSpan]::Parse((Get-VideoDuration -filePath $filePath))
 
-    $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
-    #throw popup with trimmed video path
-    #[System.Windows.Forms.MessageBox]::Show($trimmedVideo)
-
-
-
-    #ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy $trimmedVideo
-    ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy -reset_timestamps 1 -map 0 $trimmedVideo
-    Start-Process -FilePath "$trimmedVideo"
+    if ($previewStartTime -le $previewStopTime -and $previewStopTime -lt $sourceVideoDuration) {
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        #throw popup with trimmed video path
+        #[System.Windows.Forms.MessageBox]::Show($trimmedVideo)
+        ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy -reset_timestamps 1 -map 0 $trimmedVideo
+        Start-Process -FilePath "$trimmedVideo"
+    }
+    else {
+        [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.`nStart:$previewStartTime`nStop:$previewStopTime")
+    }
 }
 
 # Function to get the duration of the MP4 file
