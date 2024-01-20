@@ -160,7 +160,7 @@ $listView.HideSelection = $false
 $listView.FullRowSelect = $true
 
 # Add columns to the ListView
-$listView.Columns.Add("File", 300)
+$listView.Columns.Add("Source File", 300)
 $listView.Columns.Add("Start Time", 150)
 $listView.Columns.Add("Stop Time", 150)
 $listView.Columns.Add("Duration", 150)
@@ -479,6 +479,17 @@ $listView.Add_SelectedIndexChanged({
         $playSelectedTrim.Enabled = $false
     }
 })
+
+#list view update time text box with start and stop times from the list (single click select)
+$listView.Add_Click({
+    $startTimeHoursNumericUpDown.Value = $listView.SelectedItems[0].SubItems[1].Text.split(':')[0]
+    $startTimeMinutesNumericUpDown.Value = $listView.SelectedItems[0].SubItems[1].Text.split(':')[1]
+    $startTimeSecondsNumericUpDown.Value = $listView.SelectedItems[0].SubItems[1].Text.split(':')[2]
+    $stopTimeHoursNumericUpDown.Value = $listView.SelectedItems[0].SubItems[2].Text.split(':')[0]
+    $stopTimeMinutesNumericUpDown.Value = $listView.SelectedItems[0].SubItems[2].Text.split(':')[1]
+    $stopTimeSecondsNumericUpDown.Value = $listView.SelectedItems[0].SubItems[2].Text.split(':')[2]
+})
+
 
 # Create an event handler for the Move Up button click
 $moveUpButton.Add_Click({

@@ -227,6 +227,39 @@ function Move-TrimVideoItemDown {
         }
     }
 }
+
+#function to move the selected item up in the listview
+function Move-TrimVideoItemUp {
+    <#
+    .SYNOPSIS
+    Moves the selected trim item up in the ListView.
+
+    .DESCRIPTION
+    This function moves the currently selected item in the ListView one position up, unless it is already at the top of the list.
+
+    .PARAMETER listView
+    The ListView control containing the trim items.
+    #>
+
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.ListView]$listView
+    )
+
+    if ($listView.SelectedItems.Count -gt 0) {
+        $selectedIndex = $listView.SelectedIndices[0]
+
+        # Check if the selected item is not already at the top
+        if ($selectedIndex -gt 0) {
+            # Swap the selected item with the item above it
+            $selectedItem = $listView.Items[$selectedIndex]
+            $listView.Items.RemoveAt($selectedIndex)
+            $listView.Items.Insert($selectedIndex - 1, $selectedItem)
+            $listView.Items[$selectedIndex - 1].Selected = $true
+            $listView.EnsureVisible($selectedIndex - 1)
+        }
+    }
+}
 #function to edit the timestamps of an item in the listview. The selected item is passed to the function as a parameter after which the start and stop times in the list view become editable
 function Edit-TrimVideoItem {
     param (
@@ -243,15 +276,27 @@ function Edit-TrimVideoItem {
             "Duration" = $selectedItem.SubItems[3].Text
             "TempFile" = $selectedItem.SubItems[4].Text
         }
-
         # Update the selected video with the new time stamps
 
-        # Remove the existing video from the list
-        $listView.Items.Remove($selectedItem)
+        # update the listview item with the new timestamps
+        $selectedItem.SubItems[1].Text = $startTimeHoursNumericUpDown.Value.ToString("00") + ":" + $startTimeMinutesNumericUpDown.Value.ToString("00") + ":" + $startTimeSecondsNumericUpDown.Value.ToString("00")
+        $selectedItem.SubItems[2].Text = $stopTimeHoursNumericUpDown.Value.ToString("00") + ":" + $stopTimeMinutesNumericUpDown.Value.ToString("00") + ":" + $stopTimeSecondsNumericUpDown.Value.ToString("00")
+        #Trim duration by minusing start time from stop time
+        $selectedItem.SubItems[3].Text = [TimeSpan]::Parse($selectedItem.SubItems[2].Text) - [TimeSpan]::Parse($selectedItem.SubItems[1].Text)  
+        
+        #remove the old trimmed video and create a new one with the new timestamps
+        Remove-Item $fileDetails.TempFile
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        $fileDetails.TempFile = $trimmedVideo
+        ffmpeg -ss $fileDetails.StartTime -t $fileDetails.Duration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet        
+        $selectedItem.SubItems[4].Text = $trimmedVideo
 
-        # Add the updated video to the list
-        AddVideoFileToList -filePath $filePath -listView $listView -trimAndStitchDetailsTable $trimAndStitchDetailsTable -fileDetailsArray ([ref]$fileDetailsArray)
-
+        # Update the file details array
+        $script:fileDetailsArray = Set-FileDetailArray -listView $listView
+        
+        # Update the total duration display
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration -listView $listView)"
+        
     }
 }
 # Function to validate numeric input and range
