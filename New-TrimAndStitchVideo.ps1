@@ -5,143 +5,210 @@ Add-Type -AssemblyName System
 
 #region
 #functions
-#recreate the file details array from the listview
+
 function Set-FileDetailArray {
-    $details = foreach ($item in $listView.Items) {
-        [pscustomobject]@{
-            "FullName" = $item.SubItems[0].Text
-            "StartTime" = $item.SubItems[1].Text
-            "StopTime" = $item.SubItems[2].Text
-            "Duration" = $item.SubItems[3].Text
-            "TempFile" = $item.SubItems[4].Text
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.Windows.Forms.ListView]$listView
+    )
+    <#
+        .SYNOPSIS
+        Recreates the file details array from the ListView items.
+
+        .DESCRIPTION
+        This function iterates over each item in the provided ListView and constructs an array of custom objects containing file details.
+
+        .PARAMETER listView
+        The ListView control containing video file details.
+
+        .OUTPUTS
+        An array of custom objects with file details.
+        #>
+
+    # Initialize an empty array
+    $details = @()
+
+    try {
+        $details = foreach ($item in $listView.Items) {
+            [pscustomobject]@{
+                "FullName"  = $item.SubItems[0].Text
+                "StartTime" = $item.SubItems[1].Text
+                "StopTime"  = $item.SubItems[2].Text
+                "Duration"  = $item.SubItems[3].Text
+                "TempFile"  = $item.SubItems[4].Text
+            }
         }
+    } catch {
+        Write-Error "Error processing ListView items: $_"
     }
+
     return $details
 }
-
-#Calculate the total duration of the trimmed video
 function Get-TotalDuration {
-    $fileDetailsArray = Set-FileDetailArray
-    #convert the Duration into a timespan object and calculate the seconds then convert back to timespan   
-    # Calculate the sum of durations in seconds
-    $totalSeconds = $fileDetailsArray | ForEach-Object {
-        $duration = [TimeSpan]::Parse($_.Duration)
-        $duration.TotalSeconds
-    } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-
-    # Convert the total seconds back to a TimeSpan
-    $totalTimeSpan = [TimeSpan]::FromSeconds($totalSeconds)
-    return $totalTimeSpan
-}
-
-
-# Function to play ad video
-Function Start-SourceVideo($videoPath) {
-    try {
-        Start-Process -FilePath $videoPath
-    }
-    catch {
-        [System.Windows.Forms.MessageBox]::Show("Merged video could not be played.")
-    }
-}
-
-function Remove-SelectedTrim {
     param (
+        [Parameter(Mandatory=$true)]
         [System.Windows.Forms.ListView]$listView
     )
 
-    # Deletion logic
+    <#
+    .SYNOPSIS
+    Calculates the total duration of all video segments in the ListView.
+
+    .DESCRIPTION
+    This function computes the total duration of all video segments listed in the ListView by summing up their individual durations.
+
+    .OUTPUTS
+    TimeSpan object representing the total duration.
+    #>
+
+    $fileDetailsArray = Set-FileDetailArray -listView $listView
+
+    # Initialize TimeSpan for total duration
+    $totalDuration = [TimeSpan]::new(0)
+
+    foreach ($fileDetail in $fileDetailsArray) {
+        $totalDuration += [TimeSpan]::Parse($fileDetail.Duration)
+    }
+
+    return $totalDuration
+}
+function Start-Video {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$videoPath
+    )
+
+    <#
+    .SYNOPSIS
+    Plays a video file using the default media player.
+
+    .DESCRIPTION
+    This function attempts to play a specified video file. It can handle both source videos and trimmed video segments, depending on the input.
+
+    .PARAMETER videoPath
+    The file path of the video to be played.
+
+    .EXAMPLE
+    Start-Video -videoPath "C:\Videos\source.mp4"
+    Starts playing the source video located at "C:\Videos\source.mp4".
+    #>
+
+    if (Test-Path $videoPath) {
+        try {
+            Start-Process -FilePath $videoPath
+        }
+        catch {
+            $errorMessage = if ($isTrimmed) { "Trimmed video segment could not be played." } else { "Source video could not be played." }
+            [System.Windows.Forms.MessageBox]::Show($errorMessage + "`n" + $_.Exception.Message)
+        }
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("Video file not found: $videoPath", "File Not Found")
+    }
+}
+function Remove-SelectedTrim {
+    <#
+    .SYNOPSIS
+    Removes the selected trim from the ListView.
+
+    .DESCRIPTION
+    This function removes the selected item from the provided ListView and updates the user interface accordingly. It disables certain buttons if no items remain in the list.
+
+    .PARAMETER listView
+    The ListView control from which the selected item is to be removed.
+    #>
+    
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.ListView]$listView
+    )
+
+
     if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]        
+        $selectedItem = $listView.SelectedItems[0]
         
         # Remove the selected item from the ListView
         $listView.Items.Remove($selectedItem)
         
-        # Find the corresponding file details in the array and remove it
-        $script:fileDetailsArray = Set-FileDetailArray
+        # Update the file details array
+        $script:fileDetailsArray = Set-FileDetailArray -listView $listView
 
-        # Clear the text boxes and enable the Add to Array button
-        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
+        # Update the total duration display
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration -listView $listView)"
 
-        # Disable buttons that rely on items in the list
-        if ($listView.Items.Count -eq 0) {
-            $deleteButton.Enabled = $false
-            $playSelectedTrim.Enabled = $false
-            $clearAllButton.Enabled = $false
-            $exportIndividualTrimButton.Enabled = $false
-            $trimAndStitchButton.Enabled = $false
-            $moveUpButton.Enabled = $false
-            $moveDownButton.Enabled = $false
-            
-        }
+        # Disable buttons if no items are left in the ListView
+        $areButtonsEnabled = $listView.Items.Count -gt 0
+        $deleteButton.Enabled = $areButtonsEnabled
+        $playSelectedTrim.Enabled = $areButtonsEnabled
+        $clearAllButton.Enabled = $areButtonsEnabled
+        $exportIndividualTrimButton.Enabled = $areButtonsEnabled
+        $trimAndStitchButton.Enabled = $areButtonsEnabled
+        $moveUpButton.Enabled = $areButtonsEnabled
+        $moveDownButton.Enabled = $areButtonsEnabled
+        $editTrim.Enabled = $areButtonsEnabled
     }
 }
-
 function Move-TrimVideoItemDown {
+    <#
+        .SYNOPSIS
+        Moves the selected trim item down in the ListView.
+
+        .DESCRIPTION
+        This function moves the currently selected item in the ListView one position down, unless it is already at the bottom of the list.
+
+        .PARAMETER listView
+        The ListView control containing the trim items.
+    #>
+
     param (
+        [Parameter(Mandatory = $true)]
         [System.Windows.Forms.ListView]$listView
     )
 
-    # Move item down logic
     if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]
-        $selectedIndex = $selectedItem.Index
+        $selectedIndex = $listView.SelectedIndices[0]
 
         # Check if the selected item is not already at the bottom
         if ($selectedIndex -lt ($listView.Items.Count - 1)) {
             # Swap the selected item with the item below it
+            $selectedItem = $listView.Items[$selectedIndex]
             $listView.Items.RemoveAt($selectedIndex)
             $listView.Items.Insert($selectedIndex + 1, $selectedItem)
             $listView.Items[$selectedIndex + 1].Selected = $true
+            $listView.EnsureVisible($selectedIndex + 1)
         }
     }
 }
+function Move-TrimVideoItemDown {
+    <#
+    .SYNOPSIS
+    Moves the selected trim item down in the ListView.
 
-function Move-TrimVideoItemUp {
+    .DESCRIPTION
+    This function moves the currently selected item in the ListView one position down, unless it is already at the bottom of the list.
+
+    .PARAMETER listView
+    The ListView control containing the trim items.
+    #>
+
     param (
+        [Parameter(Mandatory = $true)]
         [System.Windows.Forms.ListView]$listView
     )
 
-    # Move item up logic
     if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItemIndex = $listView.SelectedIndices[0]  # Get the index of the selected item
+        $selectedIndex = $listView.SelectedIndices[0]
 
-        # Move the selected item up in the list
-        if ($selectedItemIndex -gt 0) {
-            $selectedItem = $listView.Items[$selectedItemIndex].Clone()  # Clone the selected item
-            $listView.Items.RemoveAt($selectedItemIndex)  # Remove the selected item
-            $listView.Items.Insert($selectedItemIndex - 1, $selectedItem)  # Insert the cloned item one position above
-
-            # Update the selected item index and reselect it
-            $listView.Items[$selectedItemIndex - 1].Selected = $true
-            $selectedItemIndex = $selectedItemIndex - 1
+        # Check if the selected item is not already at the bottom
+        if ($selectedIndex -lt ($listView.Items.Count - 1)) {
+            # Swap the selected item with the item below it
+            $selectedItem = $listView.Items[$selectedIndex]
+            $listView.Items.RemoveAt($selectedIndex)
+            $listView.Items.Insert($selectedIndex + 1, $selectedItem)
+            $listView.Items[$selectedIndex + 1].Selected = $true
+            $listView.EnsureVisible($selectedIndex + 1)
         }
     }
 }
-
-function Start-TrimmedVideo {
-
-    # Video playback logic
-    if ($listView.SelectedItems.Count -gt 0) {
-        $selectedItem = $listView.SelectedItems[0]
-        $fileDetails = @{
-            "FullName" = $selectedItem.SubItems[0].Text
-            "StartTime" = $selectedItem.SubItems[1].Text
-            "StopTime" = $selectedItem.SubItems[2].Text
-            "Duration" = $selectedItem.SubItems[3].Text
-            "TempFile" = $selectedItem.SubItems[4].Text
-        }
-
-        # Launch the selected file with default media player
-        try {
-            Start-Process -FilePath "$($fileDetails.TempFile)"
-        }
-        catch {
-            [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
-        }
-    }
-}
-
 #function to edit the timestamps of an item in the listview. The selected item is passed to the function as a parameter after which the start and stop times in the list view become editable
 function Edit-TrimVideoItem {
     param (
@@ -159,183 +226,49 @@ function Edit-TrimVideoItem {
             "TempFile" = $selectedItem.SubItems[4].Text
         }
 
-        # Disable the Add to Array button
-        $addFileButton.Enabled = $false
+        # Update the selected video with the new time stamps
 
-        # Disable the Play Trimmed File button
-        $playSelectedTrim.Enabled = $false
+        # Remove the existing video from the list
+        $listView.Items.Remove($selectedItem)
 
-        # Disable the Delete Selected button
-        $deleteButton.Enabled = $false
+        # Add the updated video to the list
+        AddVideoFileToList -filePath $filePath -listView $listView -trimAndStitchDetailsTable $trimAndStitchDetailsTable -fileDetailsArray ([ref]$fileDetailsArray)
 
-        # Disable the Move Up button
-        $moveUpButton.Enabled = $false
+    }
+}
+# Function to validate numeric input and range
+function ValidateTimeInput([Windows.Forms.TextBox]$textBox, [int]$maxValue) {
+    # Remove non-numeric characters
+    $textBox.Text = $textBox.Text -replace '[^0-9]', ''
 
-        # Disable the Move Down button
-        $moveDownButton.Enabled = $false
-
-        # Disable the Clear All button
-        $clearAllButton.Enabled = $false
-
-        # Disable the Trim and Stitch button
-        $trimAndStitchButton.Enabled = $false
-
-        # Disable the Export Individual Trims button
-        $exportIndividualTrimButton.Enabled = $false
-
-        # Disable the Edit Trim button
-        $editTrim.Enabled = $false
-
-        # Disable the Play Source File button
-        $playButton.Enabled = $false
-
-        # Disable the Add MP4 File button
-        $addMp4Button.Enabled = $false
-
-        # Disable the Start Time text box
-        $startTimeTextBox.Enabled = $false
-
-        # Disable the Stop Time text box
-        $stopTimeTextBox.Enabled = $false
-
-        # Disable the ListView
-        $listView.Enabled = $false
-        
-
-        # Create a new form to edit the trim details
-        $editForm = New-Object Windows.Forms.Form
-        $editForm.Text = "Edit Trim Details"
-        $editForm.Width = 400
-        $editForm.Height = 200
-        $editForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
-
-        # Create a label for start time
-        $startTimeLabel = New-Object Windows.Forms.Label
-        $startTimeLabel.Text = "Start time:"
-        $startTimeLabel.Location = New-Object Drawing.Point(20, 20)
-        $startTimeLabel.Width = 100
-        $startTimeLabel.Height = 20
-        
-
-        # Create a text box for start time
-        $startTimeTextBox = New-Object Windows.Forms.TextBox
-        $startTimeTextBox.Location = New-Object Drawing.Point(150, 20)
-        $startTimeTextBox.Width = 80
-        $startTimeTextBox.Text = $fileDetails.StartTime
-
-        # Create a label for stop time
-        $stopTimeLabel = New-Object Windows.Forms.Label
-        $stopTimeLabel.Text = "Stop time:"
-        $stopTimeLabel.Location = New-Object Drawing.Point(20, 50)
-        $stopTimeLabel.Width = 100
-        $stopTimeLabel.Height = 20
-
-        # Create a text box for stop time
-        $stopTimeTextBox = New-Object Windows.Forms.TextBox
-        $stopTimeTextBox.Location = New-Object Drawing.Point(150, 50)
-        $stopTimeTextBox.Width = 80
-        $stopTimeTextBox.Text = $fileDetails.StopTime
-
-        # Create a button to preview the changes
-        $previewButton = New-Object Windows.Forms.Button
-        $previewButton.Text = "Preview"
-        $previewButton.Location = New-Object Drawing.Point(20, 80)
-        $previewButton.Width = 100
-
-        #function to play the trimmed video before saving the changes
-        $previewButton.Add_Click({
-            $fileDetails.StartTime = $startTimeTextBox.Text
-            $fileDetails.StopTime = $stopTimeTextBox.Text
-            $fileDetails.Duration = [TimeSpan]::Parse($fileDetails.StopTime) - [TimeSpan]::Parse($fileDetails.StartTime)
-            $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
-            $fileDetails.TempFile = $trimmedVideo
-            $trimDuration = $fileDetails.Duration
-            ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
-            Start-Process -FilePath "$($fileDetails.TempFile)"
-        })
-
-        #there needs to be away to enable the buttsons again after the edit form is closed using the X button
-        #re-enable buttons on close
-        $editForm.Add_FormClosed({
-            $addFileButton.Enabled = $true
-            $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
-            $clearAllButton.Enabled = $true
-            $exportIndividualTrimButton.Enabled = $true
-            $exportIndividualTrimGifButton.Enabled = $true
-            $playButton.Enabled = $true
-            $addMp4Button.Enabled = $true
-            $startTimeTextBox.Enabled = $true
-            $stopTimeTextBox.Enabled = $true
-            $listView.Enabled = $true
-            $editTrim.Enabled = $true
-            $deleteButton.Enabled = $true
-            $moveUpButton.Enabled = $true
-            $moveDownButton.Enabled = $true
-        })
-
-        #Button to save the changes to the listview
-        $saveButton = New-Object Windows.Forms.Button
-        $saveButton.Text = "Save"
-        $saveButton.Location = New-Object Drawing.Point(150, 80)
-        $saveButton.Width = 100
-
-        #function to save the changes to the listview
-        $saveButton.Add_Click({
-            $fileDetails.StartTime = $startTimeTextBox.Text
-            $fileDetails.StopTime = $stopTimeTextBox.Text
-            $fileDetails.Duration = [TimeSpan]::Parse($fileDetails.StopTime) - [TimeSpan]::Parse($fileDetails.StartTime)
-            $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
-            $fileDetails.TempFile = $trimmedVideo
-            $trimDuration = $fileDetails.Duration
-            ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
-            $selectedItem.SubItems[1].Text = $fileDetails.StartTime
-            $selectedItem.SubItems[2].Text = $fileDetails.StopTime
-            $selectedItem.SubItems[3].Text = $fileDetails.Duration
-            $selectedItem.SubItems[4].Text = $fileDetails.TempFile
-            $editForm.Close()
-            $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
-            $addFileButton.Enabled = $true
-            $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
-            $clearAllButton.Enabled = $true
-            $exportIndividualTrimButton.Enabled = $true
-            $exportIndividualTrimGifButton.Enabled = $true
-            $playButton.Enabled = $true
-            $addMp4Button.Enabled = $true
-            $startTimeTextBox.Enabled = $true
-            $stopTimeTextBox.Enabled = $true
-            $listView.Enabled = $true
-            $editTrim.Enabled = $true
-            $deleteButton.Enabled = $true
-            $moveUpButton.Enabled = $true
-            $moveDownButton.Enabled = $true
-        })
-        
-        $editForm.Controls.Add($startTimeLabel)
-        $editForm.Controls.Add($startTimeTextBox)
-        $editForm.Controls.Add($stopTimeLabel)
-        $editForm.Controls.Add($stopTimeTextBox)
-        $editForm.Controls.Add($previewButton)
-        $editForm.Controls.Add($saveButton)
-
-
-        
-        
-
-        # Show the form
-        $editForm.ShowDialog()
+    # Check if the value is greater than the maximum allowed, and if so, set it to the maximum
+    if ([int]::TryParse($textBox.Text, [ref]$null) -and [int]$textBox.Text -gt $maxValue) {
+        $textBox.Text = $maxValue.ToString()
     }
 }
 
+# Add event handlers for each text box
+$startTimeHoursTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeHoursTextBox 23
+})
+$startTimeMinutesTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeMinutesTextBox 59
+})
+$startTimeSecondsTextBox.Add_TextChanged({
+    ValidateTimeInput $startTimeSecondsTextBox 59
+})
 
 
 
-
+# Function to concatenate the time parts
+function GetStartTime {
+    return "$($startTimeHoursTextBox.Text):$($startTimeMinutesTextBox.Text):$($startTimeSecondsTextBox.Text)"
+}
 #endregion
 
 #region
 
-$StartTimeLocation = @{X=20;Y=180}
-$StopTimeLocation = @{X=20;Y=210}
+
 $DurationLocation = @{X=20;Y=60}
 $AddedFileLocation = @{X=20;Y=90}
 $PlayButtonLocation = @{X=20;Y=120}
@@ -349,7 +282,7 @@ $MoveDownButtonLocation = @{X=$MoveUpButtonLocation.X+110;Y=$AddFileButtonLocati
 $clearAllButtonLocation = @{X=$MoveDownButtonLocation.X+110;Y=$AddFileButtonLocation.Y}
 $TrimAndStitchButtonLocation = @{X=20;Y=510}
 $exitButtonLocation = @{X=20;Y=600}
-$exportIndividualTrimsButtonLocation = @{X=20;Y=560}
+$exportIndividualTrimsButtonLocation = @{X=20;Y=570}
 $exportIndividualTrimsGifButtonLocation = @{X=$exportIndividualTrimsButtonLocation.X+170;Y=$exportIndividualTrimsButtonLocation.Y}
 
 # Create a form
@@ -371,22 +304,102 @@ $addMp4Button.Width = 100
 # Create a label for start time
 $startTimeLabel = New-Object Windows.Forms.Label
 $startTimeLabel.Text = "Start time:"
-$startTimeLabel.Location = New-Object Drawing.Point($($startTimeLocation.X), $($startTimeLocation.Y))
+$startTimeLabel.Location = New-Object Drawing.Point(20, 180)
+$startTimelabel.Width = 150
 
-# Create a text box for start time
-$startTimeTextBox = New-Object Windows.Forms.TextBox
-$startTimeTextBox.Location = New-Object Drawing.Point($($startTimeLocation.X+130), $($startTimeLocation.Y))
-$startTimeTextBox.Width = 80
+# Create a label for H text box
+$hourTextBoxLabel = New-Object Windows.Forms.Label
+$hourTextBoxLabel.Text = "H"
+$hourTextBoxLabel.Location = New-Object Drawing.Point(165, 165)
+$hourTextBoxLabel.Width = 10
+$hourTextBoxLabel.Height = 10
+
+# Create a label for M text box
+$minuteTextBoxLabel = New-Object Windows.Forms.Label
+$minuteTextBoxLabel.Text = "M"
+$minuteTextBoxLabel.Location = New-Object Drawing.Point(220, 165)
+$minuteTextBoxLabel.Width = 10
+$minuteTextBoxLabel.Height = 10
+
+# Create a label for S text box
+$secondTextBoxLabel = New-Object Windows.Forms.Label
+$secondTextBoxLabel.Text = "S"
+$secondTextBoxLabel.Location = New-Object Drawing.Point(275, 165)
+$secondTextBoxLabel.Width = 10
+$secondTextBoxLabel.Height = 10
+
+$form.Controls.Add($hourTextBoxLabel)
+$form.Controls.Add($minuteTextBoxLabel)
+$form.Controls.Add($secondTextBoxLabel)
+# Create NumericUpDown controls for start time hours, minutes, and seconds
+$startTimeHoursNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$startTimeHoursNumericUpDown.Location = New-Object Drawing.Point(150, 180)
+$startTimeHoursNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$startTimeHoursNumericUpDown.Minimum = 0
+
+$startTimeMinutesNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$startTimeMinutesNumericUpDown.Location = New-Object Drawing.Point(205, 180)
+$startTimeMinutesNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$startTimeMinutesNumericUpDown.Maximum = 59
+$startTimeMinutesNumericUpDown.Minimum = 0
+
+$startTimeSecondsNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$startTimeSecondsNumericUpDown.Location = New-Object Drawing.Point(260, 180)
+$startTimeSecondsNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$startTimeSecondsNumericUpDown.Maximum = 59
+$startTimeSecondsNumericUpDown.Minimum = 0
+
+# Add the NumericUpDown controls to the form (assuming $form is your form object)
+$form.Controls.Add($startTimeHoursNumericUpDown)
+$form.Controls.Add($startTimeMinutesNumericUpDown)
+$form.Controls.Add($startTimeSecondsNumericUpDown)
+
+
+# Preview button
+$previewTrimDurationVideoButton = New-Object Windows.Forms.Button
+$previewTrimDurationVideoButton.Text = "Preview Trim"
+$previewTrimDurationVideoButton.Location = New-Object Drawing.Point(320, 180)
+$previewTrimDurationVideoButton.Width = 100
+$previewTrimDurationVideoButton.Height = 50
+$previewTrimDurationVideoButton.Enabled = $false
+
+
+
+# Add the NumericUpDown controls to the form (assuming $form is your form object)
+$form.Controls.Add($previewTrimDurationVideoButton)
+
+
 
 # Create a label for stop time
 $stopTimeLabel = New-Object Windows.Forms.Label
 $stopTimeLabel.Text = "Stop time:"
-$stopTimeLabel.Location = New-Object Drawing.Point($stopTimeLocation.X, $StopTimeLocation.Y)
+$stopTimeLabel.Location = New-Object Drawing.Point(20, 210)
+$stopTimeLabel.Width = 150
 
-# Create a text box for stop time
-$stopTimeTextBox = New-Object Windows.Forms.TextBox
-$stopTimeTextBox.Location = New-Object Drawing.Point(150, $StopTimeLocation.Y)
-$stopTimeTextBox.Width = 80
+
+# Create NumericUpDown controls for stop time hours, minutes, and seconds
+$stopTimeHoursNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$stopTimeHoursNumericUpDown.Location = New-Object Drawing.Point(150, 210)
+$stopTimeHoursNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$stopTimeHoursNumericUpDown.Minimum = 0
+
+$stopTimeMinutesNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$stopTimeMinutesNumericUpDown.Location = New-Object Drawing.Point(205, 210)
+$stopTimeMinutesNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$stopTimeMinutesNumericUpDown.Maximum = 59
+$stopTimeMinutesNumericUpDown.Minimum = 0
+
+$stopTimeSecondsNumericUpDown = New-Object System.Windows.Forms.NumericUpDown
+$stopTimeSecondsNumericUpDown.Location = New-Object Drawing.Point(260, 210)
+$stopTimeSecondsNumericUpDown.Size = New-Object Drawing.Size(50, 20)
+$stopTimeSecondsNumericUpDown.Maximum = 59
+$stopTimeSecondsNumericUpDown.Minimum = 0
+
+# Add the NumericUpDown controls to the form (assuming $form is your form object)
+$form.Controls.Add($stopTimeHoursNumericUpDown)
+$form.Controls.Add($stopTimeMinutesNumericUpDown)
+$form.Controls.Add($stopTimeSecondsNumericUpDown)
+
 
 # Create a text box to display the duration
 $durationLabel = New-Object Windows.Forms.Label
@@ -431,14 +444,14 @@ $addFileButton.Enabled = $false
 $playSelectedTrim = New-Object Windows.Forms.Button
 $playSelectedTrim.Text = "Play selected file"
 $playSelectedTrim.Location = New-Object Drawing.Point($playSelectedTrimLocation.X, $playSelectedTrimLocation.Y)
-$playSelectedTrim.Width = 120
+$playSelectedTrim.Width = 110
 $playSelectedTrim.Enabled = $false
 
 # Create a button to edit the trim details
 $editTrim = New-Object Windows.Forms.Button
-$editTrim.Text = "Edit trim"
-$editTrim.Location = New-Object Drawing.Point($EditTrimButtonLocation.X, $EditTrimButtonLocation.Y)
-$editTrim.Width = 100
+$editTrim.Text = "Update Trim Times"
+$editTrim.Location = New-Object Drawing.Point(250, 250)
+$editTrim.Width = 110
 $editTrim.Enabled = $false
 
 # Create a button to delete the selected item from the ListView
@@ -520,25 +533,25 @@ catch {
 #region
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
-    Start-SourceVideo "$($file.Path)"
+    #[System.Windows.Forms.MessageBox]::Show($filePath)
+    Start-SourceVideo $filePath
 })
 
+#Process the videos in the list into a single merged video file.
+function ProcessTrimAndStitch {
+    param (
+        [System.Windows.Forms.ListView]$listView
+    )
 
-# Create an event handler for the Trim and Stitch button click
-$trimAndStitchButton.Add_Click({
     $saveFileDialog = New-Object Windows.Forms.SaveFileDialog
     $saveFileDialog.Filter = "MP4 Files (*.mp4)|*.mp4"
     $saveFileDialog.FileName = "MergedVideo_" + (Get-Date -format 'yyyyMMddHHmmss') + ".mp4"
 
     if ($saveFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         $mergedVideo = $saveFileDialog.FileName
-        $concatFile = $env:TEMP + "\concat" + (Get-Date -format 'yyyyMMddHHmmSS') + ".txt"
-        # Create an array to store items and subitems
-        $trimData = @()
+        $concatFile = "$env:TEMP\concat$(Get-Date -format 'yyyyMMddHHmmSS').txt"
 
-        # Loop through each item in the ListView
         $trimData = foreach ($item in $listView.Items) {
-            # Create an ordered dictionary to store item data
             [ordered]@{
                 "File" = $item.SubItems[0].Text
                 "Start Time" = $item.SubItems[1].Text
@@ -548,7 +561,6 @@ $trimAndStitchButton.Add_Click({
         }
         
         $count = 1
-        
         foreach ($trim in $trimData) {
             $trimmedVideo = "$env:TEMP\tempvideo$(Get-Date -format 'yyyyMMddHHmmss')_$count.mp4"
             $concatLine = "file '$trimmedVideo'"
@@ -558,27 +570,29 @@ $trimAndStitchButton.Add_Click({
             $count++
         }
 
-        
         if ($trimData.Count -gt 1) {
             ffmpeg -f concat -safe 0 -i $concatFile -c copy $mergedVideo -loglevel quiet
-        }
-        else {
+        } else {
             Copy-Item $trimmedVideo -Destination $mergedVideo
         }
 
-        # Display a message box with an OK button
         $result = [System.Windows.Forms.MessageBox]::Show("Trimming and stitching completed. Do you want to play the merged video now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
-
         if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
-            # User clicked "Yes," so open the merged video
             Start-SourceVideo $mergedVideo
         }
 
-        #clear up temp files
         Remove-Item $env:TEMP\tempvideo*.mp4
         Remove-Item $concatFile
-        
     }
+}
+
+
+# Create an event handler for the Trim and Stitch button click
+$trimAndStitchButton.Add_Click({
+    $trimAndStitchButton.Add_Click({
+        ProcessTrimAndStitch -listView $listView
+    })
+     
 })
 
 # Create an event handler for the Export Individual Trims button click
@@ -687,89 +701,209 @@ $exportIndividualTrimGifButton.Add_Click({
 
 # Create an event handler for the Add MP4 File button click
 $addMp4Button.Add_Click({
-    
+    try {
+        $openFileDialog = New-Object Windows.Forms.OpenFileDialog
+        $openFileDialog.Filter = "MP4 Files (*.mp4)|*.mp4"
 
-    $openFileDialog = New-Object Windows.Forms.OpenFileDialog
-    $openFileDialog.Filter = "MP4 Files (*.mp4)|*.mp4"
+        if ($openFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $script:filePath = $openFileDialog.FileName
 
-    if ($openFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        $script:filePath = $openFileDialog.FileName
+            # Function to get the duration of the MP4 file
+            function Get-VideoDuration {
+                param (
+                    [string]$filePath
+                )
 
-        # Use Shell.Application to get the duration of the MP4 file
-        $shell = New-Object -ComObject Shell.Application
-        $folder = $shell.Namespace((Get-Item $filePath).DirectoryName)
-        $script:file = $folder.ParseName((Get-Item $filePath).Name) 
-        $script:duration = $folder.GetDetailsOf($file, 27)
+                $shell = New-Object -ComObject Shell.Application
+                $folder = $shell.Namespace((Get-Item $filePath).DirectoryName)
+                $file = $folder.ParseName((Get-Item $filePath).Name)
+                return $folder.GetDetailsOf($file, 27)
+            }
 
-        # Prefill start and stop text boxes
-        $startTimeTextBox.Text = '00:00:00'
-        $stopTimeTextBox.Text = $duration
+            # Get the duration using the function
+            $script:duration = Get-VideoDuration -filePath $filePath
+            #[System.Windows.Forms.MessageBox]::Show("Duration: $duration")
+            # Split the duration into hours, minutes, and seconds
+            $durationParts = $duration -split ':'
+            $hours = $durationParts[0]
+            $minutes = $durationParts[1]
+            $seconds = $durationParts[2]
 
+            # Prefill start time text boxes
+            # Prefill stop time text boxes
+            $startTimeHoursNumericUpDown.Value = '00'
+            $startTimeMinutesNumericUpDown.Value = '00'
+            $startTimeSecondsNumericUpDown.Value = '00'
 
-        # Display the duration
-        $durationLabel.Text = "Duration: $duration"
+            # Prefill stop time text boxes
+            $stopTimeHoursNumericUpDown.Value = $hours
+            $stopTimeMinutesNumericUpDown.Value = $minutes  
+            $stopTimeSecondsNumericUpDown.Value = $seconds  
+            
+            # Display the duration
+            $durationLabel.Text = "Duration: $duration"
 
-        #Display the current file
-        $addedFileLabel.Text = "Current Trim File:  $($file.Path)"
+            # Display the current file
+            $addedFileLabel.Text = "Current Trim File: $($filePath)"
 
-        # Enable the start and stop time text boxes
-        $startTimeTextBox.Enabled = $true
-        $stopTimeTextBox.Enabled = $true
-        $addFileButton.Enabled = $true
-        $playButton.Enabled = $true
-        
+            # Enable the start and stop time text boxes, and other buttons
+            $startTimeHoursTextBox.Enabled = $true
+            $startTimeMinutesTextBox.Enabled = $true
+            $startTimeSecondsTextBox.Enabled = $true
+
+            $stopTimeHoursTextBox.Enabled = $true
+            $stopTimeMinutesTextBox.Enabled = $true
+            $stopTimeSecondsTextBox.Enabled = $true
+
+            $addFileButton.Enabled = $true
+            $playButton.Enabled = $true
+            $previewTrimDurationVideoButton.Enabled = $true
+        }
+    } catch {
+        # Handle exceptions
+        [System.Windows.Forms.MessageBox]::Show("An error occurred: " + $_.Exception.Message, "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
     }
 })
 
-# Create an event handler for the Add to Trim List button click
-$addFileButton.Add_Click({
+function CalculateTimeSpans {
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.NumericUpDown]$startTimeHoursControl,
+        [System.Windows.Forms.NumericUpDown]$startTimeMinutesControl,
+        [System.Windows.Forms.NumericUpDown]$startTimeSecondsControl,
+        [System.Windows.Forms.NumericUpDown]$stopTimeHoursControl,
+        [System.Windows.Forms.NumericUpDown]$stopTimeMinutesControl,
+        [System.Windows.Forms.NumericUpDown]$stopTimeSecondsControl
+    )
 
-    $start = $startTimeTextBox.Text
-    $stop = $stopTimeTextBox.Text
+    $start = FormatTime -hours $startTimeHoursControl -minutes $startTimeMinutesControl -seconds $startTimeSecondsControl
+    $stop = FormatTime -hours $stopTimeHoursControl -minutes $stopTimeMinutesControl -seconds $stopTimeSecondsControl
 
-    $durationTimeSpan = [TimeSpan]::Parse($duration)
+    
     $startTimeSpan = [TimeSpan]::Parse($start)
     $stopTimeSpan = [TimeSpan]::Parse($stop)
+    $duration = [TimeSpan]::Parse($stop) - [TimeSpan]::Parse($start)
+
+    return @{ 
+        "StartTimeSpan" = $startTimeSpan;
+        "StopTimeSpan" = $stopTimeSpan;
+        "DurationTimeSpan" = $duration
+    }
+}
+
+function AddVideoFileToList {
+    param (
+        [string]$filePath,
+        [System.Windows.Forms.ListView]$listView,
+        [System.Windows.Forms.Label]$trimAndStitchDetailsTable,
+        [ref]$fileDetailsArray
+    )
+
+    $timeSpansSplat = @{
+        startTimeHoursControl = $startTimeHoursNumericUpDown
+        startTimeMinutesControl = $startTimeMinutesNumericUpDown
+        startTimeSecondsControl = $startTimeSecondsNumericUpDown
+        stopTimeHoursControl = $stopTimeHoursNumericUpDown
+        stopTimeMinutesControl = $stopTimeMinutesNumericUpDown
+        stopTimeSecondsControl = $stopTimeSecondsNumericUpDown
+    }
+
+    $timeSpans = CalculateTimeSpans @timeSpansSplat
+
+    $durationTimeSpan = $timeSpans["DurationTimeSpan"]
+    $startTimeSpan = $timeSpans["StartTimeSpan"]
+    $stopTimeSpan = $timeSpans["StopTimeSpan"]
 
     if ($startTimeSpan -le $stopTimeSpan -and $stopTimeSpan -le $durationTimeSpan) {
-        # Add file details to the array
+        # Logic to add file details to ListView and update UI
         $fileDetails = @{
             "FullName" = $filePath
-            "StartTime" = $start
-            "StopTime" = $stop
-            "Duration" = [TimeSpan]::Parse($stop) - [TimeSpan]::Parse($start)
+            "StartTime" = $startTimeSpan
+            "StopTime" = $stopTimeSpan
+            "Duration" = $durationTimeSpan
             "TempFile" = ""
         }
         
         $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
         $fileDetails.TempFile = $trimmedVideo
-        #$concatLine = "file '$trimmedVideo'"
-        $trimDuration = $fileDetails.Duration
-        #Add-Content -Value $concatLine -Path $concatFile
-        ffmpeg -ss $fileDetails.StartTime -t $trimDuration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
+        ffmpeg -ss $fileDetails.StartTime -t $fileDetails.Duration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
         
-        $script:fileDetailsArray += $filedetails
+        $fileDetailsArray.Value += $fileDetails
 
         # Add the file details to the ListView
         $item = New-Object Windows.Forms.ListViewItem($fileDetails["FullName"])
-        $item.SubItems.Add($fileDetails["StartTime"])
-        $item.SubItems.Add($fileDetails["StopTime"])
-        $item.SubItems.Add($($fileDetails["Duration"]).ToString())
+        $item.SubItems.Add($startTimeSpan.ToString())
+        $item.SubItems.Add($stopTimeSpan.ToString())
+        $item.SubItems.Add($fileDetails["Duration"].ToString())
         $item.SubItems.Add($fileDetails["TempFile"])
         $listView.Items.Add($item)
 
-        # Clear the text boxes and enable the Add to Array button
-        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration)"
+        # Update UI elements
+        $trimAndStitchDetailsTable.Text = "Total duration of stitched video: $(Get-TotalDuration -listView $listView)"
         $addFileButton.Enabled = $true
         $trimAndStitchButton.Enabled = $true  # Enable the Trim and Stitch button
         $clearAllButton.Enabled = $true
         $exportIndividualTrimButton.Enabled = $true
-        $exportIndividualTrimGifButton.Enabled = $true        
+        $exportIndividualTrimGifButton.Enabled = $true
     } else {
-        # Show an error message if times are invalid
         [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
-        $stopTimeTextBox.Text = $duration
     }
+}
+
+
+
+# Create an event handler for the Add to Trim List button click
+$addFileButton.Add_Click({
+
+    # Call the function with the required parameters
+    AddVideoFileToList -filePath $filePath -listView $listView -trimAndStitchDetailsTable $trimAndStitchDetailsTable -fileDetailsArray ([ref]$fileDetailsArray)
+
+})
+
+
+#function to get the timestamps in hh:mm:ss format from the individual h m s textboxes
+function FormatTime([System.Windows.Forms.NumericUpDown]$hours, [System.Windows.Forms.NumericUpDown]$minutes, [System.Windows.Forms.NumericUpDown]$seconds) {
+    $formattedHours = $hours.Value.ToString("00")
+    $formattedMinutes = $minutes.Value.ToString("00")
+    $formattedSeconds = $seconds.Value.ToString("00")
+
+    return "$formattedHours`:$formattedMinutes`:$formattedSeconds"
+}
+
+#function to preview video before adding or updating to list
+function PreviewTrimmedVideo {
+    param (
+        [string]$filePath
+    )
+
+    $timeSpansSplat = @{
+        startTimeHoursControl = $startTimeHoursNumericUpDown
+        startTimeMinutesControl = $startTimeMinutesNumericUpDown
+        startTimeSecondsControl = $startTimeSecondsNumericUpDown
+        stopTimeHoursControl = $stopTimeHoursNumericUpDown
+        stopTimeMinutesControl = $stopTimeMinutesNumericUpDown
+        stopTimeSecondsControl = $stopTimeSecondsNumericUpDown
+    }
+
+    $timeSpans = CalculateTimeSpans @timeSpansSplat
+    $previewStartTime = $timeSpans["StartTimeSpan"]
+    $previewStopTime = $timeSpans["StopTimeSpan"]
+    $previewDuration = $timeSpans["DurationTimeSpan"]
+
+    $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+    #throw popup with trimmed video path
+    [System.Windows.Forms.MessageBox]::Show($trimmedVideo)
+
+
+
+    ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy $trimmedVideo
+    Start-Process -FilePath "$trimmedVideo"
+}
+
+
+#function to play the trimmed video before adding to list
+$previewTrimDurationVideoButton.Add_Click({
+    PreviewTrimmedVideo -filePath $filePath
 })
 
 # Create an event handler for when the edit trim button is clicked
@@ -831,8 +965,8 @@ $clearAllButton.Add_Click({
     $clearAllButton.Enabled = $false
     $exportIndividualTrimButton.Enabled = $false
     $trimAndStitchDetailsTable.Text = "Total duration of stitched video: "
-    $startTimeTextBox.Text = "00:00:00"
-    $stopTimeTextBox.Text = "00:00:00"
+    $exportIndividualTrimGifButton.Enabled = $false
+    $editTrim.Enabled = $false   
 })
 
 #endregion
@@ -841,9 +975,7 @@ $clearAllButton.Add_Click({
 # Add controls to the form
 $form.Controls.Add($addMp4Button)
 $form.Controls.Add($startTimeLabel)
-$form.Controls.Add($startTimeTextBox)
 $form.Controls.Add($stopTimeLabel)
-$form.Controls.Add($stopTimeTextBox)
 $form.Controls.Add($durationLabel)
 $form.Controls.Add($addFileButton)
 $form.Controls.Add($listView)
