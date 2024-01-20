@@ -254,7 +254,7 @@ function Edit-TrimVideoItem {
         
         #remove the old trimmed video and create a new one with the new timestamps
         Remove-Item $fileDetails.TempFile
-        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmssfff').mp4"
         $fileDetails.TempFile = $trimmedVideo
         ffmpeg -ss $fileDetails.StartTime -t $fileDetails.Duration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet        
         $selectedItem.SubItems[4].Text = $trimmedVideo
@@ -392,7 +392,7 @@ function AddVideoFileToList {
             "TempFile" = ""
         }
         
-        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmssfff').mp4"
         $fileDetails.TempFile = $trimmedVideo
         ffmpeg -ss $fileDetails.StartTime -t $fileDetails.Duration -i $fileDetails.FullName -c copy $trimmedVideo -loglevel quiet
         
@@ -449,7 +449,7 @@ function PreviewTrimmedVideo {
     $sourceVideoDuration = [TimeSpan]::Parse((Get-VideoDuration -filePath $filePath))
 
     if ($previewStartTime -le $previewStopTime -and $previewStopTime -lt $sourceVideoDuration) {
-        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmss').mp4"
+        $trimmedVideo = "$env:TEMP\tempvideo_$(Get-Date -format 'yyyyMMddHHmmssfff').mp4"
         #throw popup with trimmed video path
         #[System.Windows.Forms.MessageBox]::Show($trimmedVideo)
         ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy -reset_timestamps 1 -map 0 $trimmedVideo
