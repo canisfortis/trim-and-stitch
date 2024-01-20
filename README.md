@@ -11,8 +11,9 @@ The MP4 Stitch and Trim Tool is a Windows Forms application developed in PowerSh
 - **List View**: Display added video files and their trim details.
 - **Direct Copy Processing**: The tool uses FFmpeg to directly copy segments from the source video. This means that the videos are not re-encoded, ensuring extremely fast processing and preserving the original quality of the source video.
 
-## Requirements
-- **FFmpeg**: This application requires [FFmpeg](https://ffmpeg.org/) to process video files. FFmpeg is used for trimming and stitching video segments. Ensure FFmpeg is installed and accessible in your system's PATH.
+- **Dependencies**: The tool requires the following dependencies to be installed:
+  1. **FFmpeg**: Used for video trimming and stitching. Make sure it is available in your system's PATH. Download FFmpeg from [here](https://ffmpeg.org/download.html).
+  2. **Default Media Player capable of playing the selected source video types**: Required for playing video files. VLC is one such video player. Get VLC from [here](https://www.videolan.org/vlc/).
 
 ## Functions
 ### `Set-FileDetailArray`
@@ -82,3 +83,11 @@ Event handlers are attached to various controls to handle user interactions, suc
 
 ## Closing Notes
 The MP4 Stitch and Trim Tool is a comprehensive solution for basic video editing tasks, providing a straightforward interface for users to manage video segments efficiently. The application is powered by PowerShell scripts, combining the flexibility of scripting with the usability of a graphical interface.
+
+
+## License
+This project is licensed under the GNU v3 License. See the [LICENSE](LICENSE) file for full license details.
+## Acknowledgments
+- This application relies on FFmpeg for video processing.
+## Contributing
+If you'd like to contribute to the development of this tool or report issues, please check the [Issues](link_to_issues) section.
