@@ -440,7 +440,8 @@ function PreviewTrimmedVideo {
 
 
 
-    ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy $trimmedVideo
+    #ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy $trimmedVideo
+    ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy -reset_timestamps 1 -map 0 $trimmedVideo
     Start-Process -FilePath "$trimmedVideo"
 }
 
