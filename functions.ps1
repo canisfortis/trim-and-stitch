@@ -66,8 +66,11 @@ function Get-TotalDuration {
 }
 function Start-Video {
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$videoPath
+        [Parameter(Mandatory = $false)]
+        [string]$videoPath,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$isTrimmed
     )
 
     <#
@@ -85,17 +88,40 @@ function Start-Video {
     Starts playing the source video located at "C:\Videos\source.mp4".
     #>
 
-    if (Test-Path $videoPath) {
-        try {
-            Start-Process -FilePath $videoPath
-        }
-        catch {
-            $errorMessage = if ($isTrimmed) { "Trimmed video segment could not be played." } else { "Source video could not be played." }
-            [System.Windows.Forms.MessageBox]::Show($errorMessage + "`n" + $_.Exception.Message)
+    if ($isTrimmed.IsPresent) {
+        # Video playback logic
+        if ($listView.SelectedItems.Count -gt 0) {
+            $selectedItem = $listView.SelectedItems[0]
+            $fileDetails = @{
+                "FullName" = $selectedItem.SubItems[0].Text
+                "StartTime" = $selectedItem.SubItems[1].Text
+                "StopTime" = $selectedItem.SubItems[2].Text
+                "Duration" = $selectedItem.SubItems[3].Text
+                "TempFile" = $selectedItem.SubItems[4].Text
+            }
+            # Launch the selected file with default media player
+            try {
+                Start-Process -FilePath "$($fileDetails.TempFile)"
+            }
+            catch {
+                [System.Windows.Forms.MessageBox]::Show("Trimmed video segment could not be played.")
+            }
         }
     } else {
-        [System.Windows.Forms.MessageBox]::Show("Video file not found: $videoPath", "File Not Found")
+        if (Test-Path $videoPath) {
+            try {
+                Start-Process -FilePath $videoPath
+            }
+            catch {
+                $errorMessage = if ($isTrimmed) { "Trimmed video segment could not be played." } else { "Source video could not be played." }
+                [System.Windows.Forms.MessageBox]::Show($errorMessage + "`n" + $_.Exception.Message)
+            }
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("Video file not found: $videoPath", "File Not Found")
+        }
     }
+
+    
 }
 function Remove-SelectedTrim {
     <#
@@ -285,7 +311,7 @@ function ProcessTrimAndStitch {
 
         $result = [System.Windows.Forms.MessageBox]::Show("Trimming and stitching completed. Do you want to play the merged video now?", "Message", [System.Windows.Forms.MessageBoxButtons]::YesNo)
         if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
-            Start-SourceVideo $mergedVideo
+            Start-Video $mergedVideo
         }
 
         Remove-Item $env:TEMP\tempvideo*.mp4
@@ -341,8 +367,9 @@ function AddVideoFileToList {
     $durationTimeSpan = $timeSpans["DurationTimeSpan"]
     $startTimeSpan = $timeSpans["StartTimeSpan"]
     $stopTimeSpan = $timeSpans["StopTimeSpan"]
+    $sourceVideoDuration = [TimeSpan]::Parse((Get-VideoDuration -filePath $filePath))
 
-    if ($startTimeSpan -le $stopTimeSpan -and $stopTimeSpan -le $durationTimeSpan) {
+    if ($startTimeSpan -le $stopTimeSpan -and $stopTimeSpan -le $sourceVideoDuration) {
         # Logic to add file details to ListView and update UI
         $fileDetails = @{
             "FullName" = $filePath
@@ -374,7 +401,7 @@ function AddVideoFileToList {
         $exportIndividualTrimButton.Enabled = $true
         $exportIndividualTrimGifButton.Enabled = $true
     } else {
-        [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.")
+        [System.Windows.Forms.MessageBox]::Show("Invalid start or stop time. Please adjust the times.`nStart:$($startTimeSpan.gettype())`nStop:$stopTimeSpan`nDuration:$durationTimeSpan")
     }
 }
 
@@ -415,5 +442,17 @@ function PreviewTrimmedVideo {
 
     ffmpeg -ss $previewStartTime -t $previewDuration -i $filePath -c copy $trimmedVideo
     Start-Process -FilePath "$trimmedVideo"
+}
+
+# Function to get the duration of the MP4 file
+function Get-VideoDuration {
+    param (
+        [string]$filePath
+    )
+
+    $shell = New-Object -ComObject Shell.Application
+    $folder = $shell.Namespace((Get-Item $filePath).DirectoryName)
+    $file = $folder.ParseName((Get-Item $filePath).Name)
+    return $folder.GetDetailsOf($file, 27)
 }
 

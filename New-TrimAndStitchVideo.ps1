@@ -260,7 +260,7 @@ catch {
 # Create an event handler for the Play Trimmed File button click
 $playButton.Add_Click({
     #[System.Windows.Forms.MessageBox]::Show($filePath)
-    Start-SourceVideo $filePath
+    Start-Video $filePath
 })
 
 # Create an event handler for the Trim and Stitch button click
@@ -381,20 +381,8 @@ $addMp4Button.Add_Click({
         if ($openFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $script:filePath = $openFileDialog.FileName
 
-            # Function to get the duration of the MP4 file
-            function Get-VideoDuration {
-                param (
-                    [string]$filePath
-                )
-
-                $shell = New-Object -ComObject Shell.Application
-                $folder = $shell.Namespace((Get-Item $filePath).DirectoryName)
-                $file = $folder.ParseName((Get-Item $filePath).Name)
-                return $folder.GetDetailsOf($file, 27)
-            }
-
             # Get the duration using the function
-            $script:duration = Get-VideoDuration -filePath $filePath
+            $duration = Get-VideoDuration -filePath $filePath
             #[System.Windows.Forms.MessageBox]::Show("Duration: $duration")
             # Split the duration into hours, minutes, and seconds
             $durationParts = $duration -split ':'
@@ -420,13 +408,13 @@ $addMp4Button.Add_Click({
             $addedFileLabel.Text = "Current Trim File: $($filePath)"
 
             # Enable the start and stop time text boxes, and other buttons
-            $startTimeHoursTextBox.Enabled = $true
-            $startTimeMinutesTextBox.Enabled = $true
-            $startTimeSecondsTextBox.Enabled = $true
+            #$startTimeHoursTextBox.Enabled = $true
+            #$startTimeMinutesTextBox.Enabled = $true
+            #$startTimeSecondsTextBox.Enabled = $true
 
-            $stopTimeHoursTextBox.Enabled = $true
-            $stopTimeMinutesTextBox.Enabled = $true
-            $stopTimeSecondsTextBox.Enabled = $true
+            #$stopTimeHoursTextBox.Enabled = $true
+            #$stopTimeMinutesTextBox.Enabled = $true
+            #$stopTimeSecondsTextBox.Enabled = $true
 
             $addFileButton.Enabled = $true
             $playButton.Enabled = $true
@@ -470,7 +458,7 @@ $editTrim.Add_Click({
 
 # Create an event handler for the Play selected trim button click
 $playSelectedTrim.Add_Click({
-    Start-TrimmedVideo 
+    Start-Video $filePath -isTrimmed
 })
 
 # Create an event handler for the Delete Selected button click
